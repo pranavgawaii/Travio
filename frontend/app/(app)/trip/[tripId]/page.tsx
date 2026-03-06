@@ -793,289 +793,239 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
 
                     {/* BUDGET TAB */}
                     <TabsContent value="budget" className="mt-4 outline-none">
-                        <div className="space-y-6">
-                            {/* Top Overview Cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-center">
-                                    <p className="text-sm font-bold text-slate-500 mb-1 font-inter">Total Trip Spend</p>
-                                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                                        ₹{totalBudget.toLocaleString()}
-                                    </h2>
+                        <div className="space-y-8 pb-12">
+                            {/* Budget Overview Header */}
+                            <div className="flex items-end justify-between">
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1" style={{ fontFamily: "'Quicksand', sans-serif" }}>Budget Overview</h2>
+                                    <p className="text-slate-500 text-sm font-medium">Track expenses and manage splits for your trip.</p>
                                 </div>
-                                <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-center">
-                                    <p className="text-sm font-bold text-slate-500 mb-1 font-inter">Your Fair Share</p>
-                                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                                        ₹{Math.round(totalBudget / (trip.members?.length || 1)).toLocaleString()}
-                                    </h2>
+                                {canEdit && (
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button className="bg-[#3b82f6] hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold transition-colors flex items-center gap-2 text-sm shadow-sm shadow-blue-500/20">
+                                                <Plus className="h-4 w-4" /> Add Expense
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[425px] rounded-[1.5rem] border-0 shadow-2xl p-6 sm:p-8 bg-white">
+                                            <DialogHeader>
+                                                <DialogTitle className="text-2xl font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>New Expense</DialogTitle>
+                                                <DialogDescription className="text-slate-500 font-medium">Record a new cost for the trip.</DialogDescription>
+                                            </DialogHeader>
+                                            <div className="grid gap-5 py-6">
+                                                <div className="grid gap-2.5">
+                                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">What was this for?</label>
+                                                    <Input id="expense-name" placeholder="E.g. Dinner, Taxi, Tickets" className="h-12 rounded-xl border-slate-200 focus-visible:ring-[#3b82f6]/20 bg-slate-50/50 font-bold text-slate-800" />
+                                                </div>
+                                                <div className="grid gap-2.5">
+                                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">Amount (₹)</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                                        <Input id="expense-amount" type="number" placeholder="0.00" className="h-12 pl-8 rounded-xl border-slate-200 focus-visible:ring-[#3b82f6]/20 bg-slate-50/50 font-bold text-slate-800" />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid gap-2.5">
+                                                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">Category</label>
+                                                        <select id="expense-category" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#3b82f6]/20 appearance-none">
+                                                            <option value="Food">Food</option>
+                                                            <option value="Stay">Stay</option>
+                                                            <option value="Travel">Travel</option>
+                                                            <option value="Transport">Transport</option>
+                                                            <option value="Activities">Activities</option>
+                                                            <option value="Misc">Misc</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="grid gap-2.5">
+                                                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">Paid By</label>
+                                                        <select id="expense-payer" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#3b82f6]/20 appearance-none">
+                                                            {(trip.members || []).map((m: TripMember) => {
+                                                                const isYou = user && m.userId === user.id;
+                                                                return <option key={m.userId} value={m.userId}>{isYou ? "You" : m.name}</option>;
+                                                            })}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Button className="w-full rounded-xl bg-[#3b82f6] hover:bg-blue-600 font-bold shadow-md h-12 text-white tracking-wide" onClick={async () => {
+                                                const nameInput = document.getElementById('expense-name') as HTMLInputElement;
+                                                const amountInput = document.getElementById('expense-amount') as HTMLInputElement;
+                                                const payerSelect = document.getElementById('expense-payer') as HTMLSelectElement;
+                                                const categorySelect = document.getElementById('expense-category') as HTMLSelectElement;
+                                                if (nameInput?.value && amountInput?.value) {
+                                                    const m = trip.members.find(m => m.userId === payerSelect.value);
+                                                    const rawName = m?.name || "Member";
+                                                    const isDemoOwner = rawName === "Demo User";
+                                                    const isYou = user && m?.userId === user.id;
+                                                    const dName = (isYou || isDemoOwner) ? (user?.fullName || user?.firstName || "chaicode") : rawName;
+                                                    const newExpense = {
+                                                        name: nameInput.value,
+                                                        amount: Number(amountInput.value),
+                                                        category: categorySelect.value || 'Misc',
+                                                        paidBy: payerSelect.value,
+                                                        paidByName: dName,
+                                                        date: new Date().toISOString()
+                                                    };
+                                                    const updated = [...budgetData, newExpense as any];
+                                                    setBudgetData(updated);
+                                                    await saveTrip({ expenses: updated });
+                                                    nameInput.value = '';
+                                                    amountInput.value = '';
+                                                }
+                                            }}>Add Transaction</Button>
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+                            </div>
+
+                            {/* 4 Column Top Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {/* Total Spent */}
+                                <div className="bg-white dark:bg-[#2A2A2A] p-5 rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm">
+                                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-[#3b82f6] flex items-center justify-center mb-3.5">
+                                        <Wallet className="h-4 w-4 stroke-[2.5px]" />
+                                    </div>
+                                    <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Total Spent</p>
+                                    <div className="flex items-end gap-3">
+                                        <span className="text-[28px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{totalBudget.toLocaleString()}</span>
+                                    </div>
                                 </div>
+
+                                {/* Your Balance / Pending Splits */}
                                 {(() => {
                                     const yourTotalPaid = user ? budgetData.filter(e => e.paidBy === user.id || e.paidByName === (user.fullName || user.firstName)).reduce((sum, e) => sum + e.amount, 0) : 0;
                                     const yourShare = totalBudget / (trip.members?.length || 1);
                                     const yourBalance = yourTotalPaid - yourShare;
+                                    const isOwed = yourBalance >= 0;
                                     return (
-                                        <div className={`bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-center`}>
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-sm font-bold text-slate-500 mb-1 font-inter">Your Balance</p>
-                                                <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-full", yourBalance >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
-                                                    {yourBalance >= 0 ? "Owed to you" : "You owe"}
+                                        <div className="bg-white dark:bg-[#2A2A2A] p-5 rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm">
+                                            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center mb-3.5", isOwed ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
+                                                <RefreshCcw className="h-4 w-4 stroke-[2.5px]" />
+                                            </div>
+                                            <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">{isOwed ? "They Owe You" : "You Owe"}</p>
+                                            <div className="flex items-end gap-3">
+                                                <span className={cn("text-[28px] font-bold tracking-tight", isOwed ? "text-emerald-500" : "text-rose-500")} style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                    {isOwed ? "+" : "-"}₹{Math.abs(Math.round(yourBalance)).toLocaleString()}
                                                 </span>
                                             </div>
-                                            <h2 className={cn("text-3xl font-bold tracking-tight", yourBalance >= 0 ? "text-emerald-500" : "text-rose-500")} style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                                                {yourBalance >= 0 ? "+" : "-"}₹{Math.abs(Math.round(yourBalance)).toLocaleString()}
-                                            </h2>
                                         </div>
                                     );
                                 })()}
+
+                                {/* Average Per Person */}
+                                <div className="bg-white dark:bg-[#2A2A2A] p-5 rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm">
+                                    <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center mb-3.5">
+                                        <Users className="h-4 w-4 stroke-[2.5px]" />
+                                    </div>
+                                    <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Avg Per Person</p>
+                                    <div className="flex items-end gap-3">
+                                        <span className="text-[28px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{Math.round(totalBudget / (trip.members?.length || 1)).toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                {/* Budget Remaining (Static Demo for UX) */}
+                                <div className="bg-white dark:bg-[#2A2A2A] p-5 rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm relative overflow-hidden">
+                                    <div className="absolute right-0 top-0 h-full w-1.5 bg-emerald-500"></div>
+                                    <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center mb-3.5">
+                                        <PieChart className="h-4 w-4 stroke-[2.5px]" />
+                                    </div>
+                                    <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Budget Target</p>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-[28px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{totalBudget.toLocaleString()}</span>
+                                    </div>
+                                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-4">
+                                        <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: "100%" }}></div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Main Column: Expenses List */}
-                                <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[400px]">
-                                    <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div>
-                                            <h3 className="font-bold text-slate-900 text-[17px] tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>Transactions</h3>
-                                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">{budgetData.length} records</p>
-                                        </div>
-                                        {canEdit && (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button className="rounded-xl px-5 h-10 bg-[#3b82f6] hover:bg-blue-600 text-white transition-all shadow-sm font-bold text-sm tracking-wide">
-                                                        <Plus className="h-4 w-4 mr-2" /> Add Expense
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-[425px] rounded-[1.5rem] border-0 shadow-2xl p-6 sm:p-8 bg-white">
-                                                    <DialogHeader>
-                                                        <DialogTitle className="text-2xl font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>New Expense</DialogTitle>
-                                                        <DialogDescription className="text-slate-500 font-medium">Record a new cost for the trip.</DialogDescription>
-                                                    </DialogHeader>
-                                                    <div className="grid gap-5 py-6">
-                                                        <div className="grid gap-2.5">
-                                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">What was this for?</label>
-                                                            <Input id="expense-name" placeholder="E.g. Dinner, Taxi, Tickets" className="h-12 rounded-xl border-slate-200 focus-visible:ring-[#3b82f6]/20 bg-slate-50/50 font-bold text-slate-800" />
-                                                        </div>
-                                                        <div className="grid gap-2.5">
-                                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">Amount (₹)</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                                                                <Input id="expense-amount" type="number" placeholder="0.00" className="h-12 pl-8 rounded-xl border-slate-200 focus-visible:ring-[#3b82f6]/20 bg-slate-50/50 font-bold text-slate-800" />
-                                                            </div>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <div className="grid gap-2.5">
-                                                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">Category</label>
-                                                                <select id="expense-category" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#3b82f6]/20 appearance-none">
-                                                                    <option value="Food">Food</option>
-                                                                    <option value="Stay">Stay</option>
-                                                                    <option value="Travel">Travel</option>
-                                                                    <option value="Transport">Transport</option>
-                                                                    <option value="Activities">Activities</option>
-                                                                    <option value="Misc">Misc</option>
-                                                                </select>
-                                                            </div>
-                                                            <div className="grid gap-2.5">
-                                                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">Paid By</label>
-                                                                <select id="expense-payer" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#3b82f6]/20 appearance-none">
-                                                                    {(trip.members || []).map((m: TripMember) => {
-                                                                        const isYou = user && m.userId === user.id;
-                                                                        return <option key={m.userId} value={m.userId}>{isYou ? "You" : m.name}</option>;
-                                                                    })}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <Button className="w-full rounded-xl bg-[#3b82f6] hover:bg-blue-600 font-bold shadow-md h-12 text-white tracking-wide" onClick={async () => {
-                                                        const nameInput = document.getElementById('expense-name') as HTMLInputElement;
-                                                        const amountInput = document.getElementById('expense-amount') as HTMLInputElement;
-                                                        const payerSelect = document.getElementById('expense-payer') as HTMLSelectElement;
-                                                        const categorySelect = document.getElementById('expense-category') as HTMLSelectElement;
-                                                        if (nameInput?.value && amountInput?.value) {
-                                                            const m = trip.members.find(m => m.userId === payerSelect.value);
-                                                            const rawName = m?.name || "Member";
-                                                            const isDemoOwner = rawName === "Demo User";
-                                                            const isYou = user && m?.userId === user.id;
-                                                            const dName = (isYou || isDemoOwner) ? (user?.fullName || user?.firstName || "chaicode") : rawName;
-                                                            const newExpense = {
-                                                                name: nameInput.value,
-                                                                amount: Number(amountInput.value),
-                                                                category: categorySelect.value || 'Misc',
-                                                                paidBy: payerSelect.value,
-                                                                paidByName: dName,
-                                                                date: new Date().toISOString()
-                                                            };
-                                                            const updated = [...budgetData, newExpense as any];
-                                                            setBudgetData(updated);
-                                                            await saveTrip({ expenses: updated });
-                                                            nameInput.value = '';
-                                                            amountInput.value = '';
-                                                        }
-                                                    }}>Add Transaction</Button>
-                                                </DialogContent>
-                                            </Dialog>
-                                        )}
+                            {/* Recent Expenses Table Section */}
+                            <div className="bg-white dark:bg-[#2A2A2A] rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm overflow-hidden mt-8">
+                                <div className="px-6 py-5 border-b border-slate-100 dark:border-[#374151] flex items-center justify-between">
+                                    <h3 className="font-bold text-slate-900 text-lg tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>Transactions</h3>
+                                    <div className="flex items-center gap-2 hidden sm:flex">
+                                        <button className="text-[13px] font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2 transition-colors">
+                                            <Filter className="h-3.5 w-3.5" /> Filter
+                                        </button>
+                                        <button className="text-[13px] font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2 transition-colors">
+                                            <Download className="h-3.5 w-3.5" /> Export
+                                        </button>
                                     </div>
-
-                                    {budgetData.length === 0 ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center py-16 text-slate-400">
-                                            <Wallet className="h-10 w-10 text-slate-200 mb-3" />
-                                            <p className="font-bold text-sm">No transactions yet</p>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            {[...budgetData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense: Expense, idx) => {
-                                                // Data is clean in DB now — direct lookup
-                                                const m = trip.members.find((m: TripMember) => m.userId === expense.paidBy) || trip.members.find((m: TripMember) => m.name === expense.paidByName);
-                                                const isYou = !!(user && expense.paidBy === user.id);
-
-                                                const payeeName = isYou ? (user!.fullName || user!.firstName || 'You') : (m?.name || expense.paidByName || 'Member');
-                                                const payeeAvatar = isYou ? user!.imageUrl : (m?.avatar || '');
-
-                                                return (
-                                                    <div key={expense._id || idx} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors group border-b border-slate-100 last:border-0">
-                                                        {/* Left: name + meta */}
-                                                        <div className="flex flex-col min-w-0">
-                                                            <p className="font-bold text-slate-900 text-[15px] truncate" style={{ fontFamily: "'Quicksand', sans-serif" }}>{expense.name}</p>
-                                                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5 uppercase tracking-widest">{format(new Date(expense.date), "MMM d")} &middot; {expense.category}</p>
-                                                        </div>
-                                                        {/* Right: avatar + name + amount + delete */}
-                                                        <div className="flex items-center gap-6 shrink-0 ml-4">
-                                                            <div className="hidden sm:flex items-center gap-2">
-                                                                <Avatar className="h-7 w-7 border border-slate-100 shadow-sm">
-                                                                    <AvatarImage src={payeeAvatar} />
-                                                                    <AvatarFallback className="bg-slate-100 text-slate-600 text-[10px] font-bold">{payeeName[0]?.toUpperCase()}</AvatarFallback>
-                                                                </Avatar>
-                                                                <span className="text-[13px] font-bold text-slate-600" style={{ fontFamily: "'Quicksand', sans-serif" }}>{payeeName}</span>
-                                                            </div>
-                                                            <p className="font-bold text-slate-900 text-[17px] tracking-tight min-w-[80px] text-right" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{expense.amount.toLocaleString()}</p>
-                                                            {canEdit && (
-                                                                <Button variant="ghost" size="icon" onClick={() => deleteExpense(expense._id)} className="h-7 w-7 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full opacity-0 group-hover:opacity-100 transition-all">
-                                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
                                 </div>
 
-                                {/* Right Column: Categories & Settlements */}
-                                <div className="space-y-6">
+                                {budgetData.length === 0 ? (
+                                    <div className="flex-1 flex flex-col items-center justify-center py-16 text-slate-400 bg-slate-50/50">
+                                        <Wallet className="h-10 w-10 text-slate-300 mb-3" />
+                                        <p className="font-bold text-sm tracking-wide">No transactions yet</p>
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-slate-50/70 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                                                    <th className="px-6 py-4">Expense</th>
+                                                    <th className="px-6 py-4">Paid By</th>
+                                                    <th className="px-6 py-4">Category</th>
+                                                    <th className="px-6 py-4">Amount</th>
+                                                    <th className="px-6 py-4 hidden md:table-cell">Split Details</th>
+                                                    <th className="px-6 py-4 text-right"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {[...budgetData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense: Expense, idx) => {
+                                                    const m = trip.members.find((m: TripMember) => m.userId === expense.paidBy) || trip.members.find((m: TripMember) => m.name === expense.paidByName);
+                                                    const isYou = !!(user && expense.paidBy === user.id);
+                                                    const payeeName = isYou ? (user!.fullName || user!.firstName || 'You') : (m?.name || expense.paidByName || 'Member');
+                                                    const payeeAvatar = isYou ? user!.imageUrl : (m?.avatar || '');
 
-                                    {/* Settlements Card */}
-                                    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
-                                        <h3 className="font-bold text-slate-900 tracking-tight mb-1 text-lg" style={{ fontFamily: "'Quicksand', sans-serif" }}>Settlements</h3>
-                                        <p className="text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-6">Who owes whom</p>
+                                                    const iconMap: Record<string, any> = { 'Food': <Coffee className="h-3.5 w-3.5 mr-1.5" />, 'Stay': <Home className="h-3.5 w-3.5 mr-1.5" />, 'Travel': <PlaneTakeoff className="h-3.5 w-3.5 mr-1.5" />, 'Transport': <Car className="h-3.5 w-3.5 mr-1.5" />, 'Activities': <Ticket className="h-3.5 w-3.5 mr-1.5" />, 'Misc': <Wallet className="h-3.5 w-3.5 mr-1.5" /> };
+                                                    const colorMap: Record<string, string> = { 'Food': 'bg-orange-50 text-orange-600 border-orange-100', 'Stay': 'bg-blue-50 text-blue-600 border-blue-100', 'Travel': 'bg-cyan-50 text-cyan-600 border-cyan-100', 'Transport': 'bg-emerald-50 text-emerald-600 border-emerald-100', 'Activities': 'bg-purple-50 text-purple-600 border-purple-100', 'Misc': 'bg-slate-100 text-slate-600 border-slate-200' };
 
-                                        <div className="space-y-3">
-                                            {(() => {
-                                                const balances = (trip.members || []).map(member => {
-                                                    const totalPaid = budgetData.filter(e => e.paidBy === member.userId || e.paidByName === member.name).reduce((sum, e) => sum + e.amount, 0);
-                                                    const share = totalBudget / (trip.members.length || 1);
-                                                    return { member, balance: totalPaid - share };
-                                                });
-
-                                                const getBack = balances.filter(b => b.balance > 1).map(b => ({ ...b }));
-                                                const owes = balances.filter(b => b.balance < -1).map(b => ({ ...b }));
-
-                                                const settlements = [];
-                                                let i = 0, j = 0;
-                                                while (i < getBack.length && j < owes.length) {
-                                                    const receiver = getBack[i];
-                                                    const payer = owes[j];
-                                                    const amount = Math.min(receiver.balance, Math.abs(payer.balance));
-
-                                                    if (amount >= 1) {
-                                                        settlements.push({ from: payer.member, to: receiver.member, amount });
-                                                    }
-
-                                                    receiver.balance -= amount;
-                                                    payer.balance += amount;
-
-                                                    if (receiver.balance < 1) i++;
-                                                    if (Math.abs(payer.balance) < 1) j++;
-                                                }
-
-                                                if (settlements.length === 0) {
                                                     return (
-                                                        <div className="py-6 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                                                            <CheckCircle2 className="h-8 w-8 text-emerald-400 mb-2" />
-                                                            <p className="font-bold text-sm">Everyone is settled up!</p>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                return settlements.map((settlement, sIdx) => {
-                                                    const isYouPayer = !!(user && settlement.from.userId === user.id);
-                                                    const isYouReceiver = !!(user && settlement.to.userId === user.id);
-
-                                                    const getDName = (m: any, isY: boolean) => {
-                                                        if (isY) return "You";
-                                                        const rawName = m.name || "Member";
-                                                        return rawName === "Demo User" ? (m.email?.split('@')[0] || "Member") : rawName;
-                                                    };
-
-                                                    const payerName = getDName(settlement.from, isYouPayer);
-                                                    const receiverName = getDName(settlement.to, isYouReceiver);
-
-                                                    const payerAvatar = isYouPayer ? user.imageUrl : (settlement.from.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(payerName)}`);
-                                                    return (
-                                                        <div key={sIdx} className="flex items-center gap-3 p-4 rounded-[14px] bg-slate-50 hover:bg-slate-100 transition-colors border border-slate-100/80">
-                                                            <Avatar className="h-9 w-9 border border-white shadow-sm shrink-0 bg-white">
-                                                                <AvatarImage src={payerAvatar} />
-                                                                <AvatarFallback className="bg-slate-200 text-slate-700 text-xs font-bold">{payerName[0]?.toUpperCase()}</AvatarFallback>
-                                                            </Avatar>
-
-                                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                                <div className="flex items-center text-sm">
-                                                                    <span className="font-bold text-slate-800 truncate" style={{ fontFamily: "'Quicksand', sans-serif" }}>{payerName}</span>
-                                                                    <span className="text-slate-400 mx-2 shrink-0 font-bold text-[10px] uppercase">owes</span>
-                                                                    <span className="font-bold text-slate-800 truncate" style={{ fontFamily: "'Quicksand', sans-serif" }}>{receiverName}</span>
+                                                        <tr key={expense._id || idx} className="hover:bg-slate-50/60 transition-colors group">
+                                                            <td className="px-6 py-5">
+                                                                <div className="flex flex-col min-w-[140px]">
+                                                                    <span className="font-bold text-[15px] text-slate-900" style={{ fontFamily: "'Quicksand', sans-serif" }}>{expense.name}</span>
+                                                                    <span className="text-[12px] font-semibold text-slate-400 mt-1">{format(new Date(expense.date), "MMM d, yyyy")}</span>
                                                                 </div>
-                                                                <div className="font-bold text-[#3b82f6] mt-0.5 text-[15px] tracking-tight">₹{Math.round(settlement.amount).toLocaleString()}</div>
-                                                            </div>
-                                                        </div>
+                                                            </td>
+                                                            <td className="px-6 py-5">
+                                                                <div className="flex items-center gap-3">
+                                                                    <Avatar className="h-7 w-7 border-0 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)]">
+                                                                        <AvatarImage src={payeeAvatar} />
+                                                                        <AvatarFallback className="bg-slate-200 text-slate-700 text-[10px] font-bold">{payeeName[0]?.toUpperCase()}</AvatarFallback>
+                                                                    </Avatar>
+                                                                    <span className="text-[14px] font-bold text-slate-700" style={{ fontFamily: "'Quicksand', sans-serif" }}>{isYou ? "You" : payeeName}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-5">
+                                                                <span className={cn("inline-flex items-center px-3 py-1 rounded-lg text-[12px] font-bold border", colorMap[expense.category] || colorMap['Misc'])}>
+                                                                    {iconMap[expense.category] || iconMap['Misc']} {expense.category}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-5">
+                                                                <span className="font-bold text-[16px] text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{expense.amount.toLocaleString()}</span>
+                                                            </td>
+                                                            <td className="px-6 py-5 hidden md:table-cell">
+                                                                <div className="flex items-center gap-3">
+                                                                    <AvatarGroup avatars={(trip.members || []).slice(0, 4).map((m: TripMember, mIdx) => ({ src: mIdx === 0 && user ? user.imageUrl : m.avatar, label: m.name }))} maxVisible={4} size={24} overlap={6} />
+                                                                    <span className="text-[12px] font-bold text-slate-400">Equally</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-5 text-right">
+                                                                {canEdit && (
+                                                                    <Button variant="ghost" size="icon" onClick={() => deleteExpense(expense._id)} className="h-8 w-8 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all ml-auto">
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
+                                                            </td>
+                                                        </tr>
                                                     );
-                                                });
-                                            })()}
-                                        </div>
+                                                })}
+                                            </tbody>
+                                        </table>
                                     </div>
-
-                                    {/* Categories Breakdown */}
-                                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                                        <h3 className="font-bold text-slate-900 tracking-tight mb-1 text-lg" style={{ fontFamily: "'Quicksand', sans-serif" }}>Categories</h3>
-                                        <p className="text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-6">Where it went</p>
-
-                                        {aggBudgetData.length === 0 ? (
-                                            <p className="text-sm font-bold text-slate-400 text-center py-6">No data to display.</p>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                {/* Visual Bar */}
-                                                <div className="flex h-3 w-full rounded-full overflow-hidden mb-6">
-                                                    {aggBudgetData.sort((a, b) => b.value - a.value).map(item => (
-                                                        <div key={item.name} style={{ width: `${(item.value / totalBudget) * 100}%`, backgroundColor: item.color }} className="h-full" />
-                                                    ))}
-                                                </div>
-
-                                                {/* List */}
-                                                <div className="space-y-3">
-                                                    {aggBudgetData.map((item) => (
-                                                        <div key={item.name} className="flex items-center justify-between text-sm py-1 group">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="w-3 h-3 rounded-md shadow-sm" style={{ backgroundColor: item.color }}></span>
-                                                                <span className="font-bold text-slate-700 group-hover:text-slate-900 transition-colors" style={{ fontFamily: "'Quicksand', sans-serif" }}>{item.name}</span>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <span className="font-bold text-slate-900 tracking-tight block">₹{item.value.toLocaleString()}</span>
-                                                                <span className="text-[10px] font-bold text-slate-400 block mt-0.5">{((item.value / totalBudget) * 100).toFixed(0)}%</span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </TabsContent>

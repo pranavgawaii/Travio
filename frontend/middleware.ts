@@ -10,14 +10,6 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const host = req.headers.get("host");
-
-  if (host === "www.travio.fun") {
-    const url = new URL(req.url);
-    url.hostname = "travio.fun";
-    return NextResponse.redirect(url, 308);
-  }
-
   if (!isPublicRoute(req)) {
     await auth.protect();
   }

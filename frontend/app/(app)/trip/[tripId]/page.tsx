@@ -29,6 +29,16 @@ import {
     GripVertical,
     ChevronDown,
     Loader2,
+    RefreshCcw,
+    Users,
+    PieChart,
+    Filter,
+    Coffee,
+    Home,
+    Car,
+    Ticket,
+    Eye,
+    EyeOff,
 } from "lucide-react";
 import { Button } from "@frontend/ui/ui/button";
 import { Badge } from "@frontend/ui/ui/badge";
@@ -296,11 +306,11 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     const router = useRouter();
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://travio.fun").replace(/\/$/, "");
 
-    // Settings & Edit States
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState("");
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [isCoverHidden, setIsCoverHidden] = useState(false);
     const fetchTrip = useCallback(async () => {
         try {
             setLoading(true);
@@ -540,174 +550,214 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     // ────────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen bg-slate-100/60 font-inter text-slate-900 pb-20">
+        <div className="min-h-screen flex flex-col bg-[#FAFAFA] font-inter pb-20">
+            {/* TOP NAVIGATION BAR */}
+            <header className="flex items-center justify-between px-8 py-5 border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
+                <div className="flex items-center gap-2 text-[14px]">
+                    <Link href="/dashboard" className="text-[#6B7280] font-medium hover:text-slate-900 transition-colors">Trips</Link>
+                    <span className="text-[#E5E7EB]">/</span>
+                    <span className="text-slate-900 font-semibold">{trip.title}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setIsCoverHidden(!isCoverHidden)}
+                        title={isCoverHidden ? "Show Cover Image" : "Hide Cover Image"}
+                        className="relative w-9 h-9 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:text-slate-900 transition-colors shadow-sm"
+                    >
+                        {isCoverHidden ? <Eye className="w-[18px] h-[18px]" /> : <EyeOff className="w-[18px] h-[18px]" />}
+                    </button>
+                    <button className="relative w-9 h-9 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:text-slate-900 transition-colors shadow-sm">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                        </svg>
+                        <span className="absolute top-[8px] right-[10px] w-1.5 h-1.5 bg-red-500 rounded-full border-[1px] border-white"></span>
+                    </button>
+                    {user?.imageUrl ? (
+                        <Image src={user.imageUrl} alt="User Avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover border border-[#E5E7EB] shadow-sm cursor-pointer" />
+                    ) : (
+                        <div className="w-9 h-9 rounded-full bg-slate-200 border border-[#E5E7EB] flex items-center justify-center overflow-hidden">
+                            <svg className="w-5 h-5 text-slate-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                        </div>
+                    )}
+                </div>
+            </header>
 
+            {/* HEADER BANNER */}
+            <div className={`relative w-full z-10 shrink-0 transition-all duration-500 overflow-hidden ${isCoverHidden ? 'h-32 sm:h-[160px]' : 'h-48 sm:h-[260px]'}`}>
+                {!isCoverHidden ? (
+                    <>
+                        <Image
+                            src={normalizeRemoteImage(trip.coverImage, 1200, 74)}
+                            alt={`${trip.title} cover`}
+                            fill
+                            priority
+                            sizes="100vw"
+                            className="object-cover transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    </>
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-slate-800"></div>
+                )}
 
-            {/* HEADER (Containerized) */}
-            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-                <div className="relative w-full h-[280px] sm:h-[320px] bg-slate-900 rounded-[2rem] overflow-hidden group shadow-lg">
-                    <Image
-                        src={normalizeRemoteImage(trip.coverImage, 1200, 74)}
-                        alt={`${trip.title} cover`}
-                        fill
-                        priority
-                        sizes="(max-width: 1440px) 100vw, 1400px"
-                        className="object-cover opacity-60 transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-slate-900/60 transition-colors group-hover:bg-slate-900/50"></div>
-
-                    {/* Navigation Breadcrumb within header */}
-                    <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10 text-white">
-                        <div className="flex items-center gap-4">
-                            <Link href="/dashboard" className="flex items-center gap-2 bg-black/20 hover:bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full transition-colors">
-                                <PlaneTakeoff className="h-4 w-4" />
-                            </Link>
-                            {trip.isDemo && (
-                                <div className="flex items-center px-3 py-1 bg-blue-500/20 border border-blue-400/30 backdrop-blur-md rounded-full shadow-lg">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse mr-2" />
-                                    <span className="text-[10px] font-semibold text-blue-100 uppercase tracking-widest">Demo Mode</span>
+                {canEdit && (
+                    <div className="absolute top-4 right-4 z-20">
+                        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                            <DialogTrigger asChild>
+                                <button className="flex items-center justify-center h-8 w-8 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full transition-colors text-white/90 border border-white/10">
+                                    <Settings className="h-[15px] w-[15px]" />
+                                </button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border-0 rounded-[1.5rem] shadow-2xl bg-white">
+                                <div className="p-8">
+                                    <DialogHeader className="mb-8">
+                                        <DialogTitle className="text-2xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Quicksand', sans-serif" }}>Trip Settings</DialogTitle>
+                                        <DialogDescription className="text-slate-500 font-medium">Manage your trip details and preferences.</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-6">
+                                        <div className="space-y-3">
+                                            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Trip Details</h4>
+                                            <div className="space-y-1">
+                                                <Button variant="ghost" className="w-full justify-start text-slate-700 hover:bg-slate-50 rounded-xl h-12 px-3 font-bold transition-colors shadow-none border-0" onClick={() => { setIsSettingsOpen(false); setIsEditingTitle(true); }}>
+                                                    <Edit2 className="h-4 w-4 mr-3 text-slate-400" />
+                                                    Rename Trip
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Danger Zone</h4>
+                                            <div className="p-1">
+                                                <Button variant="ghost" className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl h-12 px-3 font-bold transition-colors shadow-none border-0 group" onClick={handleDeleteTrip} disabled={deleting}>
+                                                    <Trash2 className="h-4 w-4 mr-3 text-red-400 group-hover:text-red-600" />
+                                                    {deleting ? "Deleting Trip..." : "Delete Trip Permanently"}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
+                                <div className="bg-slate-50 p-6 flex justify-end border-t border-slate-100">
+                                    <Button onClick={() => setIsSettingsOpen(false)} className="rounded-xl font-semibold bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 px-6">Close</Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                )}
+
+                {/* Bottom Overlay: Title, Dates, Users */}
+                <div className={`absolute left-8 right-8 flex justify-between items-end ${isCoverHidden ? 'bottom-6' : 'bottom-8'}`}>
+                    <div className="text-white">
+                        <div className="flex items-center gap-3 mb-3">
+                            <span className="bg-[#0066FF] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider leading-none shadow-sm">
+                                {canEdit ? "Upcoming" : "Viewer"}
+                            </span>
+                            <span className="text-[15px] font-medium text-white/90 drop-shadow-sm tracking-wide">
+                                {format(new Date(trip.startDate), "MMM d")} - {format(new Date(trip.endDate), "MMM d, yyyy")}
+                            </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5 group/title">
+                            {isEditingTitle ? (
+                                <Input
+                                    value={editedTitle}
+                                    onChange={(e) => setEditedTitle(e.target.value)}
+                                    onBlur={handleSaveTitle}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+                                    autoFocus
+                                    className="text-[34px] sm:text-[40px] font-bold bg-white/10 text-white border-white/30 h-auto py-1 px-3 rounded-lg focus-visible:ring-[#0066FF]/50 max-w-sm leading-tight"
+                                />
+                            ) : (
+                                <h1 className="text-[34px] sm:text-[40px] font-bold text-white tracking-tight drop-shadow-lg flex items-center gap-3 cursor-pointer leading-tight" onClick={() => canEdit && setIsEditingTitle(true)}>
+                                    {trip.title}
+                                    {canEdit && <Edit2 className="h-5 w-5 opacity-0 group-hover/title:opacity-100 transition-opacity text-white/70" />}
+                                </h1>
                             )}
+                            <p className="text-[15px] font-medium opacity-90 flex items-center gap-1.5 text-white drop-shadow mt-0.5">
+                                <MapPin className="h-[16px] w-[16px] text-white/80" /> {(trip.days && trip.days.length > 0 && trip.days[0]?.activities[0]?.location) || "Multiple Locations"}
+                            </p>
                         </div>
                     </div>
 
-                    <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10 text-white">
-                        <div>
-                            <div className="flex items-center gap-3 mb-3">
-                                <Badge variant="outline" className="bg-white/20 hover:bg-white/30 text-white border-none backdrop-blur-md px-3 py-1 font-medium text-sm">
-                                    <CalendarIcon className="h-4 w-4 mr-2" />
-                                    {format(new Date(trip.startDate), "MMM d")} – {format(new Date(trip.endDate), "MMM d")}
-                                </Badge>
-                                <div className="flex items-center bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-sm font-medium">
-                                    <div className="mr-2">
-                                        <AvatarGroup
-                                            avatars={(trip.members || []).map((m: TripMember, idx) => ({
-                                                src: idx === 0 && user ? user.imageUrl : m.avatar,
-                                                label: idx === 0 && user ? (user.fullName || user.firstName || m.name) : m.name
-                                            }))}
-                                            maxVisible={3}
-                                            size={24}
-                                            overlap={8}
-                                        />
-                                    </div>
-                                    <span>{(trip.members || []).length} Travelers</span>
-                                </div>
-                                {!canEdit && (
-                                    <div className="flex items-center bg-amber-500/20 border border-amber-400/30 backdrop-blur-md px-3 py-1.5 rounded-full text-amber-100 text-sm font-medium shadow-lg animate-in fade-in zoom-in duration-500">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-2" />
-                                        <span className="flex items-center gap-1.5">
-                                            Viewer Mode <span className="opacity-60 text-xs font-normal hidden sm:inline">| Contact owner to edit</span>
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-2 group">
-                                {isEditingTitle ? (
-                                    <Input
-                                        value={editedTitle}
-                                        onChange={(e) => setEditedTitle(e.target.value)}
-                                        onBlur={handleSaveTitle}
-                                        onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-                                        autoFocus
-                                        className="text-3xl sm:text-4xl font-medium bg-white/10 text-white border-white/20 h-auto py-1 px-3 rounded-xl focus-visible:ring-white/30 max-w-md"
+                    <div className="flex items-center hidden sm:flex gap-4">
+                        <div className="flex -space-x-3 items-center">
+                            {(trip.members || []).slice(0, 4).map((m: TripMember, idx, arr) => (
+                                <div
+                                    key={m.userId}
+                                    className="group relative shrink-0 rounded-full border-[2px] border-white bg-white shadow-sm transition-transform duration-300 hover:-translate-y-[6px] hover:z-50 cursor-pointer"
+                                    style={{ zIndex: arr.length - idx }}
+                                >
+                                    <Image
+                                        alt={m.name}
+                                        width={44}
+                                        height={44}
+                                        className="w-[44px] h-[44px] rounded-full object-cover"
+                                        src={idx === 0 && user ? user.imageUrl : (m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`)}
                                     />
-                                ) : (
-                                    <>
-                                        <h1 className="text-4xl sm:text-5xl font-semibold text-white tracking-tight drop-shadow-sm">
-                                            {trip.title}
-                                        </h1>
-                                        {canEdit && (
-                                            <button
-                                                onClick={() => setIsEditingTitle(true)}
-                                                className="text-white/60 hover:text-white mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <Edit2 className="h-5 w-5" />
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                                    {/* Tooltip */}
+                                    <div
+                                        className="pointer-events-none absolute left-1/2 z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:-translate-y-1 group-hover:opacity-100"
+                                        style={{ top: -38, transform: "translateX(-50%)" }}
+                                    >
+                                        {m.name}
+                                        <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-slate-900" />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-
-                        <div className="flex items-center gap-3">
-                            <Button className="bg-white text-slate-900 hover:bg-slate-100 font-semibold rounded-xl transition-all" onClick={() => alert("Trip share link copied!")}>
-                                <Share2 className="h-4 w-4 mr-2" />
-                                Share
-                            </Button>
-                            {canEdit && (
-                                <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-md font-semibold rounded-xl transition-all">
-                                            <Settings className="h-4 w-4" />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border-0 rounded-3xl shadow-2xl bg-white">
-                                        <div className="p-8">
-                                            <DialogHeader className="mb-8">
-                                                <DialogTitle className="text-2xl font-semibold">Trip Settings</DialogTitle>
-                                                <DialogDescription className="text-slate-500">
-                                                    Manage your trip details and preferences.
-                                                </DialogDescription>
-                                            </DialogHeader>
-
-                                            <div className="space-y-6">
-                                                <div className="space-y-3">
-                                                    <h4 className="text-xs font-medium text-slate-400 uppercase tracking-widest px-1">Trip Details</h4>
-                                                    <div className="space-y-1">
-                                                        <Button variant="ghost" className="w-full justify-start text-slate-700 hover:bg-slate-50 rounded-xl h-12 px-3 font-semibold transition-colors" onClick={() => { setIsSettingsOpen(false); setIsEditingTitle(true); }}>
-                                                            <Edit2 className="h-4 w-4 mr-3 text-slate-400" />
-                                                            Rename Trip
-                                                        </Button>
-                                                        <Button variant="ghost" className="w-full justify-start text-slate-700 hover:bg-slate-50 rounded-xl h-12 px-3 font-semibold transition-colors">
-                                                            <UploadCloud className="h-4 w-4 mr-3 text-slate-400" />
-                                                            Change Cover Image
-                                                        </Button>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-3">
-                                                    <h4 className="text-xs font-medium text-slate-400 uppercase tracking-widest px-1">Danger Zone</h4>
-                                                    <div className="p-1">
-                                                        <Button
-                                                            variant="ghost"
-                                                            className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl h-12 px-3 font-semibold transition-all group"
-                                                            onClick={handleDeleteTrip}
-                                                            disabled={deleting}
-                                                        >
-                                                            <Trash2 className="h-4 w-4 mr-3 text-red-400 group-hover:text-red-600" />
-                                                            {deleting ? "Deleting Trip..." : "Delete Trip Permanently"}
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-slate-50 p-6 flex justify-end border-t border-slate-100">
-                                            <Button onClick={() => setIsSettingsOpen(false)} className="rounded-xl font-semibold bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 px-6">Close</Button>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                            )} {/* end canEdit gate for Settings */}
-                        </div>
+                        {canEdit && (
+                            <button
+                                onClick={() => {
+                                    const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://travio.fun';
+                                    navigator.clipboard.writeText(`${appUrl}/join/${trip?.inviteCode}`);
+                                    alert("Shareable link copied to clipboard!");
+                                }}
+                                title="Copy Shareable Invite Link"
+                                className="group relative w-[44px] h-[44px] shrink-0 rounded-full border-[2px] border-white bg-white/30 hover:bg-white/40 backdrop-blur-md flex items-center justify-center transition-all duration-300 text-white shadow-sm z-0 hover:z-50 hover:-translate-y-[6px]"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <line x1="19" y1="8" x2="19" y2="14" />
+                                    <line x1="22" y1="11" x2="16" y2="11" />
+                                </svg>
+                                {/* Tooltip */}
+                                <div
+                                    className="pointer-events-none absolute left-1/2 z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:-translate-y-1 group-hover:opacity-100"
+                                    style={{ top: -38, transform: "translateX(-50%)" }}
+                                >
+                                    Copy Invite Link
+                                    <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-slate-900" />
+                                </div>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* TABS & CONTENT CONTANER */}
-            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-                <Tabs defaultValue="itinerary" onValueChange={setActiveTab} className="w-full relative">
-                    <div className="sticky top-4 z-40 mb-8 px-4 sm:px-0 flex justify-center w-full">
-                        <TabsList className="bg-white/80 backdrop-blur-xl border border-slate-200/60 p-1.5 rounded-2xl h-auto shadow-md shadow-slate-200/50 inline-flex flex-wrap sm:flex-nowrap justify-center gap-1 w-fit max-w-full">
-                            <TabsTrigger value="itinerary" className="rounded-xl px-5 py-2.5 font-bold text-[14px] text-slate-500 data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white transition-all duration-300 hover:text-slate-800">Itinerary</TabsTrigger>
-                            <TabsTrigger value="budget" className="rounded-xl px-5 py-2.5 font-bold text-[14px] text-slate-500 data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white transition-all duration-300 hover:text-slate-800">Budget</TabsTrigger>
-                            <TabsTrigger value="checklists" className="rounded-xl px-5 py-2.5 font-bold text-[14px] text-slate-500 data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white transition-all duration-300 hover:text-slate-800">Checklists</TabsTrigger>
-                            <TabsTrigger value="files" className="rounded-xl px-5 py-2.5 font-bold text-[14px] text-slate-500 data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white transition-all duration-300 hover:text-slate-800">Files</TabsTrigger>
-                            <TabsTrigger value="members" className="rounded-xl px-5 py-2.5 font-bold text-[14px] text-slate-500 data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white transition-all duration-300 hover:text-slate-800">Members</TabsTrigger>
+            {/* TABS CONTAINER */}
+            <Tabs defaultValue="itinerary" onValueChange={setActiveTab} className="w-full flex-1 flex flex-col mt-0 border-t-0 p-0 shadow-none">
+                <div className="bg-white border-b border-[#E5E7EB] z-20 px-8 w-full">
+                    <div className="max-w-[1400px] mx-auto w-full">
+                        <TabsList className="flex gap-8 justify-start h-auto bg-transparent border-0 outline-none w-full overflow-x-auto no-scrollbar shadow-none rounded-none">
+                            {['Itinerary', 'Budget', 'Checklist', 'Files', 'Members'].map((tab) => {
+                                const tabValue = tab.toLowerCase() === 'checklist' ? 'checklists' : tab.toLowerCase();
+                                return (
+                                    <TabsTrigger
+                                        key={tab}
+                                        value={tabValue}
+                                        className="px-0 py-[18px] text-[15px] font-medium text-[#6B7280] data-[state=active]:text-[#0066FF] data-[state=active]:border-b-[#0066FF] border-b-[2px] border-transparent rounded-none transition-colors data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-slate-900 focus:outline-none relative translate-y-[1px]"
+                                    >
+                                        {tab}
+                                    </TabsTrigger>
+                                )
+                            })}
                         </TabsList>
                     </div>
+                </div>
 
-                    {/* ITINERARY TAB - FILTERED VIEW WITH PREMIUM TIMELINE */}
-                    <TabsContent value="itinerary" className="outline-none border-none">
+                <div className="max-w-[1400px] mx-auto px-4 w-full sm:px-8 py-8 space-y-8 flex-1">
+                    {/* ITINERARY TAB */}
+                    <TabsContent value="itinerary" className="outline-none border-none m-0 p-0 h-full mt-2">
                         <div className="flex-1 overflow-x-auto pb-12 no-scrollbar px-4 sm:px-0">
                             <div className="flex gap-6 min-w-max items-start">
                                 {days.map((day, idx) => (
@@ -1366,8 +1416,8 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                             </div>
                         </div>
                     </TabsContent>
-                </Tabs>
-            </div>
+                </div>
+            </Tabs>
         </div>
     );
 }

@@ -98,9 +98,6 @@ function UpcomingPlanSkeleton() {
     );
 }
 
-// Module-level guard — survives React StrictMode double-invoke
-let dashboardFetched = false;
-
 export default function DashboardPage() {
     const { user, isLoaded } = useUser();
     const [startDate, setStartDate] = useState<Date>();
@@ -124,30 +121,16 @@ export default function DashboardPage() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiResponse, setAiResponse] = useState<string | null>(null);
 
-
-    const fetchTrips = useCallback(async () => {
-        try {
-            const res = await fetch("/api/trips");
-            if (res.ok) setTrips(await res.json());
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     useEffect(() => {
-        // Gate on Clerk being ready and only run once
         if (!isLoaded) return;
-        if (dashboardFetched) {
-            // StrictMode 2nd mount — just stop the spinner, data is already in state
-            setLoading(false);
-            return;
-        }
-        dashboardFetched = true;
 
-        const setupAndFetch = async () => {
-            if (user) {
-                const email = user.primaryEmailAddress?.emailAddress?.toLowerCase();
-                if (email === "demo@travio.com") {
+        const controller = new AbortController();
+        const { signal } = controller;
+
+        const run = async () => {
+            try {
+                // Seed demo data if needed
+                if (user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com") {
                     await fetch("/api/demo/seed", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -156,15 +139,32 @@ export default function DashboardPage() {
                             userName: user.fullName || user.firstName || "Traveler",
                             userAvatar: user.imageUrl,
                             userEmail: user.primaryEmailAddress?.emailAddress ?? ""
-                        })
+                        }),
+                        signal,
                     });
                 }
+
+                const res = await fetch("/api/trips", { signal });
+                if (res.ok) setTrips(await res.json());
+            } catch {
+                // AbortError is expected on cleanup — silently ignore
+            } finally {
+                if (!signal.aborted) setLoading(false);
             }
-            await fetchTrips();
         };
 
-        setupAndFetch();
-    }, [isLoaded, user, fetchTrips]);
+        run();
+        return () => controller.abort();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoaded]);
+
+    const fetchTrips = useCallback(async () => {
+        try {
+            const res = await fetch("/api/trips");
+            if (res.ok) setTrips(await res.json());
+        } catch { /* silent */ }
+    }, []);
+
 
     const handleCreateTrip = async () => {
         if (!newTripTitle || !startDate || !endDate) return;

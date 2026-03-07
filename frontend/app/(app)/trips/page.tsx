@@ -62,9 +62,6 @@ function TripCardSkeleton() {
     );
 }
 
-// Module-level guard — survives React StrictMode double-invoke
-let tripsFetched = false;
-
 export default function TripsPage() {
     const { user, isLoaded } = useUser();
     const [trips, setTrips] = useState<TripData[]>([]);
@@ -81,28 +78,27 @@ export default function TripsPage() {
     );
 
     useEffect(() => {
-        // Wait for Clerk to finish, then fetch exactly once
         if (!isLoaded) return;
-        if (tripsFetched) {
-            // Already fetched on a prior mount — just stop the spinner
-            setLoading(false);
-            return;
-        }
-        tripsFetched = true;
+
+        const controller = new AbortController();
+        const { signal } = controller;
 
         const fetchTrips = async () => {
             try {
-                const res = await fetch("/api/trips");
-                if (res.ok) {
-                    setTrips(await res.json());
-                }
+                const res = await fetch("/api/trips", { signal });
+                if (res.ok) setTrips(await res.json());
+            } catch {
+                // AbortError on cleanup — silently ignore
             } finally {
-                setLoading(false);
+                if (!signal.aborted) setLoading(false);
             }
         };
 
         fetchTrips();
+        return () => controller.abort();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoaded]);
+
 
     const isDemoUser = mounted && user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
 

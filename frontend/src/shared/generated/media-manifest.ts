@@ -58,6 +58,66 @@ export const mediaManifest = {
       "800": "/optimized/curatedBeach-800.webp",
       "1200": "/optimized/curatedBeach-1200.webp"
     }
+  },
+  "avatarHitesh": {
+    "usage": "thumbnail",
+    "source": "/hitesh.jpg",
+    "blurDataURL": "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAACwBACdASoUABQAPwF2slQrJyQjKAgBYCAJYgDKABEc3pYcG1gy167Lj+/kl+ugAP7wyCaG2y5yJBF1yxXV94Iz6GZFdTXH8ui7C7zEMF2lcZTc0rXSp09ewIv04TZC/5UPWUcpTlrSRb/rbwXW20kxNRg5pY7T+tIuCnlkAAA=",
+    "avif": {
+      "400": "/optimized/avatarHitesh-400.avif",
+      "800": "/optimized/avatarHitesh-800.avif",
+      "1200": "/optimized/avatarHitesh-1200.avif"
+    },
+    "webp": {
+      "400": "/optimized/avatarHitesh-400.webp",
+      "800": "/optimized/avatarHitesh-800.webp",
+      "1200": "/optimized/avatarHitesh-1200.webp"
+    }
+  },
+  "avatarPiyush": {
+    "usage": "thumbnail",
+    "source": "/piyush.jpg",
+    "blurDataURL": "data:image/webp;base64,UklGRtAAAABXRUJQVlA4IMQAAADwBACdASoUABQAPwF2s1OrJySiqAgBYCAJYwC1G2c2SCdw/lHWrgfeaIH3H+1ovhAA99brZcBZpIRQ8fxy/+IhHNrCMgBamdHwXiVUr/bD4PB/zZJKKnEm2k3JAxU+sdfArGwwe41hQM3KaiuQbQzH16GsR0JqHQQ3ZsdUCyH2V3ZVvBeifnCS6RHPto4iypJqJzFjbm1OG37ZCAJXtOMHhIX11sF7wwTzBZ3B0U5IrwJqFCpdkMvHvnJ9CDzMdVdfgAAA",
+    "avif": {
+      "400": "/optimized/avatarPiyush-400.avif",
+      "800": "/optimized/avatarPiyush-800.avif",
+      "1200": "/optimized/avatarPiyush-1200.avif"
+    },
+    "webp": {
+      "400": "/optimized/avatarPiyush-400.webp",
+      "800": "/optimized/avatarPiyush-800.webp",
+      "1200": "/optimized/avatarPiyush-1200.webp"
+    }
+  },
+  "avatarAnirudh": {
+    "usage": "thumbnail",
+    "source": "/anirudh.jpg",
+    "blurDataURL": "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAADwBACdASoUABQAPwF0r1KrJqQiqAqpYCAJYwCo9BGB8Z+M6luEXsAJBhNq2AZN7GAA/hEXV9EKA40xS6RIeH/nS5PVMMo4SxS1Zkk9/swxkn8jEIBAbMYpXhYLVRRzXvUV6mRtQ2c7LsJdS+Xekvo41UC65zsSJeS0jbP+AAA=",
+    "avif": {
+      "400": "/optimized/avatarAnirudh-400.avif",
+      "800": "/optimized/avatarAnirudh-800.avif",
+      "1200": "/optimized/avatarAnirudh-1200.avif"
+    },
+    "webp": {
+      "400": "/optimized/avatarAnirudh-400.webp",
+      "800": "/optimized/avatarAnirudh-800.webp",
+      "1200": "/optimized/avatarAnirudh-1200.webp"
+    }
+  },
+  "avatarChaicode": {
+    "usage": "thumbnail",
+    "source": "/Chaicode.jpg",
+    "blurDataURL": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAAAwBACdASoUABQAPwFosFGrJSSisBgIAWAgCWYAAC52BfYqLgHpoG9kRgAA/vKpAHD1O0m9aHnqcFVsUS2Npys95LsF+fRrZpbOYCeKp6AHmroHv4KaUws5lpY0K8xSCD+Q1UBnWdZUBgAA",
+    "avif": {
+      "400": "/optimized/avatarChaicode-400.avif",
+      "800": "/optimized/avatarChaicode-800.avif",
+      "1200": "/optimized/avatarChaicode-1200.avif"
+    },
+    "webp": {
+      "400": "/optimized/avatarChaicode-400.webp",
+      "800": "/optimized/avatarChaicode-800.webp",
+      "1200": "/optimized/avatarChaicode-1200.webp"
+    }
   }
 } as const;
 

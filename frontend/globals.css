@@ -83,7 +83,10 @@ html {
 }
 
 body {
-    background-color: #f8fafc;
+    background-color: #ffffff;
+    background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+    background-attachment: fixed;
 }
 
 ::-webkit-scrollbar {

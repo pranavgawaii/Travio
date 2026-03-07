@@ -22,6 +22,10 @@ const ASSETS = [
   { key: "dashboardPreview", source: "dashboard-preview.png", usage: "hero" },
   { key: "curatedMountains", source: "hero-section.png", usage: "card" },
   { key: "curatedBeach", source: "dashboard-preview.png", usage: "card" },
+  { key: "avatarHitesh", source: "hitesh.jpg", usage: "thumbnail" },
+  { key: "avatarPiyush", source: "piyush.jpg", usage: "thumbnail" },
+  { key: "avatarAnirudh", source: "anirudh.jpg", usage: "thumbnail" },
+  { key: "avatarChaicode", source: "Chaicode.jpg", usage: "thumbnail" },
 ];
 
 function getQuality(usage, format) {

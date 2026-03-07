@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
@@ -67,6 +67,7 @@ export default function TripsPage() {
     const [trips, setTrips] = useState<TripData[]>([]);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
+    const hasFetched = React.useRef(false);
 
     useEffect(() => {
         setMounted(true);
@@ -77,21 +78,24 @@ export default function TripsPage() {
         [],
     );
 
-    const fetchTrips = useCallback(async () => {
-        try {
-            setLoading(true);
-            const res = await fetch("/api/trips");
-            if (res.ok) {
-                setTrips(await res.json());
-            }
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     useEffect(() => {
+        // Only fetch once when Clerk has finished loading the user
+        if (!isLoaded || hasFetched.current) return;
+        hasFetched.current = true;
+
+        const fetchTrips = async () => {
+            try {
+                const res = await fetch("/api/trips");
+                if (res.ok) {
+                    setTrips(await res.json());
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchTrips();
-    }, [fetchTrips, isLoaded]);
+    }, [isLoaded]);
 
     const isDemoUser = mounted && user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
 

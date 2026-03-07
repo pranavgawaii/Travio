@@ -121,9 +121,10 @@ export default function DashboardPage() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiResponse, setAiResponse] = useState<string | null>(null);
 
+    const hasFetched = React.useRef(false);
+
     const fetchTrips = useCallback(async () => {
         try {
-            setLoading(true);
             const res = await fetch("/api/trips");
             if (res.ok) setTrips(await res.json());
         } finally {
@@ -132,9 +133,12 @@ export default function DashboardPage() {
     }, []);
 
     useEffect(() => {
-        const setupDemo = async () => {
-            if (isLoaded && user) {
-                // If it's the demo account, seed the DB
+        // Gate on Clerk being ready and only run once
+        if (!isLoaded || hasFetched.current) return;
+        hasFetched.current = true;
+
+        const setupAndFetch = async () => {
+            if (user) {
                 const email = user.primaryEmailAddress?.emailAddress?.toLowerCase();
                 if (email === "demo@travio.com") {
                     await fetch("/api/demo/seed", {
@@ -147,18 +151,13 @@ export default function DashboardPage() {
                             userEmail: user.primaryEmailAddress?.emailAddress ?? ""
                         })
                     });
-                    // Re-fetch trips after seeding is guaranteed complete
-                    fetchTrips();
-                } else {
-                    // For non-demo users, just fetch normally
-                    // We only need to do this here if you want it tied to `isLoaded && user`
                 }
             }
+            await fetchTrips();
         };
-        setupDemo();
-    }, [isLoaded, user, fetchTrips]);
 
-    useEffect(() => { fetchTrips(); }, [fetchTrips]);
+        setupAndFetch();
+    }, [isLoaded, user, fetchTrips]);
 
     const handleCreateTrip = async () => {
         if (!newTripTitle || !startDate || !endDate) return;

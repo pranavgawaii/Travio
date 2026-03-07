@@ -20,7 +20,6 @@ const BUDGETS = {
 const ASSETS = [
   { key: "marketingHero", source: "hero-section.png", usage: "hero" },
   { key: "dashboardPreview", source: "dashboard-preview.png", usage: "hero" },
-  { key: "curatedRoadTrip", source: "hero-bg.jpg", usage: "card" },
   { key: "curatedMountains", source: "hero-section.png", usage: "card" },
   { key: "curatedBeach", source: "dashboard-preview.png", usage: "card" },
 ];

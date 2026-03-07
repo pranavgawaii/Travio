@@ -160,6 +160,8 @@ const TripSchema = new Schema<ITrip>(
     { timestamps: true }
 );
 
+TripSchema.index({ inviteCode: 1 });
+
 // Model singleton (handles Next.js hot-reload double-registration)
 const Trip: Model<ITrip> =
     (mongoose.models.Trip as Model<ITrip>) ?? mongoose.model<ITrip>("Trip", TripSchema);

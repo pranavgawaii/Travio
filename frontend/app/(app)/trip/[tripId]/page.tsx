@@ -828,10 +828,10 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                         </div>
                         {canEdit && (
                             <button
-                                onClick={() => {
-                                    const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://travio.fun';
+                                onClick={(e) => {
+                                    e.preventDefault();
                                     navigator.clipboard.writeText(`${appUrl}/join/${trip?.inviteCode}`);
-                                    alert("Shareable link copied to clipboard!");
+                                    alert("Invite link copied to clipboard!");
                                 }}
                                 title="Copy Shareable Invite Link"
                                 className="group relative w-[44px] h-[44px] shrink-0 rounded-full border-[2px] border-white bg-white/30 hover:bg-white/40 backdrop-blur-md flex items-center justify-center transition-all duration-300 text-white shadow-sm z-0 hover:z-50 hover:-translate-y-[6px]"
@@ -1453,7 +1453,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                     <div className="relative">
                                         <Input
                                             readOnly
-                                            value={`travio.fun/join/${trip.inviteCode}`}
+                                            value={`${appUrl.replace(/^https?:\/\//, '')}/join/${trip.inviteCode}`}
                                             className="h-11 w-full sm:w-[280px] bg-white border-slate-200 text-slate-500 font-medium text-[14px] rounded-xl focus-visible:ring-0 focus-visible:ring-offset-0 px-4"
                                             style={{ fontFamily: "'Quicksand', sans-serif" }}
                                         />

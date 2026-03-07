@@ -125,8 +125,7 @@ export default function DashboardPage() {
         // Wait for BOTH Clerk to finish AND user to be available
         if (!isLoaded || !user) return;
 
-        const controller = new AbortController();
-        const { signal } = controller;
+        let active = true;
 
         const run = async () => {
             try {
@@ -141,29 +140,26 @@ export default function DashboardPage() {
                             userAvatar: user.imageUrl,
                             userEmail: user.primaryEmailAddress?.emailAddress ?? ""
                         }),
-                        signal,
+                        // Removed signal to ensure DB seeding fully completes even if user navigates fast
                     });
                 }
 
                 // Explicitly wait for seed to finish before fetching trips
-                const res = await fetch("/api/trips", { signal });
+                const res = await fetch("/api/trips");
                 if (res.ok) {
                     const data = await res.json();
-                    if (!signal.aborted) setTrips(data);
+                    if (active) setTrips(data);
                 }
             } catch (err: any) {
-                // Ignore AbortError, log other errors if needed
-                if (err.name !== 'AbortError') {
-                    console.error("Trip fetch error:", err);
-                }
+                console.error("Trip fetch error:", err);
             } finally {
-                if (!signal.aborted) setLoading(false);
+                if (active) setLoading(false);
             }
         };
 
         run();
-        return () => controller.abort();
-    }, [isLoaded, user?.id, user?.primaryEmailAddress?.emailAddress, user?.fullName, user?.firstName, user?.imageUrl]);
+        return () => { active = false; };
+    }, [isLoaded, user?.id]);
 
 
     const fetchTrips = useCallback(async () => {

@@ -81,29 +81,25 @@ export default function TripsPage() {
         // Wait for BOTH Clerk to finish AND user to be available
         if (!isLoaded || !user) return;
 
-        const controller = new AbortController();
-        const { signal } = controller;
+        let active = true;
 
         const fetchTrips = async () => {
             try {
-                const res = await fetch("/api/trips", { signal });
+                const res = await fetch("/api/trips");
                 if (res.ok) {
                     const data = await res.json();
-                    if (!signal.aborted) setTrips(data);
+                    if (active) setTrips(data);
                 }
             } catch (err: any) {
-                // AbortError on StrictMode cleanup — silently ignore
-                if (err.name !== 'AbortError') {
-                    console.error("Trip fetch error:", err);
-                }
+                console.error("Trip fetch error:", err);
             } finally {
-                if (!signal.aborted) setLoading(false);
+                if (active) setLoading(false);
             }
         };
 
         fetchTrips();
-        return () => controller.abort();
-    }, [isLoaded, user?.id, user?.primaryEmailAddress?.emailAddress]); // safely run when user fully populates
+        return () => { active = false; };
+    }, [isLoaded, user?.id]); // safely run when user fully populates
 
     const isDemoUser = mounted && user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
 

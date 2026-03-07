@@ -1,129 +1,278 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { MessageSquare, Bell, Search, Plus, Send, Phone, Video, Info, MoreVertical, Paperclip, Smile, Image as ImageIcon } from "lucide-react";
-import { Badge } from "@frontend/ui/ui/badge";
-import { Button } from "@frontend/ui/ui/button";
+import { Search, X, Paperclip, Mic, CornerDownLeft } from "lucide-react";
 import { Input } from "@frontend/ui/ui/input";
+import { MessageDock } from "@frontend/ui/message-dock";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChatMessageList } from "@frontend/ui/chat-message-list";
+import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage, ChatBubbleAction, ChatBubbleActionWrapper } from "@frontend/ui/chat-bubble";
+import { ChatInput } from "@frontend/ui/chat-input";
+import { Button } from "@frontend/ui/ui/button";
+
+interface AppMessage {
+    id: string;
+    text: string;
+    sender: string;
+    timestamp: Date;
+    isAi?: boolean;
+}
+
+interface ChatThread {
+    characterId: string;
+    messages: AppMessage[];
+    isThinking: boolean;
+}
 
 export default function ChatPage() {
     const { user } = useUser();
+    const [threads, setThreads] = useState<Record<string, ChatThread>>({});
+    const [activeChatId, setActiveChatId] = useState<string | null>(null);
+    const [input, setInput] = useState("");
+
+    const handleSend = (text: string, character?: any) => {
+        const targetCharId = character?.id || activeChatId;
+        if (!targetCharId) return;
+
+        const targetCharacter = character || [
+            { id: "pranav", name: "Pranav Gawai", avatar: user?.imageUrl || "https://i.pravatar.cc/150?u=pranav" },
+            { id: "ananya", name: "Ananya Mehra", avatar: "https://i.pravatar.cc/150?u=ananya" },
+            { id: "vikram", name: "Vikram Singh", avatar: "https://i.pravatar.cc/150?u=vikram" },
+            { id: "rahul", name: "Rahul Sharma", avatar: "https://i.pravatar.cc/150?u=rahul" },
+        ].find(c => c.id === targetCharId);
+
+        if (!threads[targetCharId]) {
+            setThreads(prev => ({
+                ...prev,
+                [targetCharId]: { characterId: targetCharId, messages: [], isThinking: false }
+            }));
+        }
+
+        const userMsg: AppMessage = {
+            id: Math.random().toString(),
+            text,
+            sender: user?.firstName || "You",
+            timestamp: new Date()
+        };
+
+        setThreads(prev => ({
+            ...prev,
+            [targetCharId]: {
+                ...prev[targetCharId],
+                messages: [...(prev[targetCharId]?.messages || []), userMsg],
+                isThinking: true
+            }
+        }));
+
+        setActiveChatId(targetCharId);
+
+        setTimeout(() => {
+            const aiMsg: AppMessage = {
+                id: Math.random().toString(),
+                text: `Premium messaging feature will soon be available on the Travio application.`,
+                sender: "Travio AI",
+                timestamp: new Date(),
+                isAi: true
+            };
+            setThreads(prev => ({
+                ...prev,
+                [targetCharId]: {
+                    ...prev[targetCharId],
+                    messages: [...prev[targetCharId].messages, aiMsg],
+                    isThinking: false
+                }
+            }));
+        }, 1500);
+    };
+
+    const thread = activeChatId ? threads[activeChatId] : null;
+    const activeCharacter = [
+        { id: "pranav", name: "Pranav Gawai", avatar: user?.imageUrl || "https://i.pravatar.cc/150?u=pranav" },
+        { id: "ananya", name: "Ananya Mehra", avatar: "https://i.pravatar.cc/150?u=ananya" },
+        { id: "vikram", name: "Vikram Singh", avatar: "https://i.pravatar.cc/150?u=vikram" },
+        { id: "rahul", name: "Rahul Sharma", avatar: "https://i.pravatar.cc/150?u=rahul" },
+    ].find(c => c.id === activeChatId) || { name: "Guest", avatar: "" };
+
+    const TravioLogoIcon = () => (
+        <img src="/icon.svg" alt="Travio" className="w-full h-full object-cover" />
+    );
 
     return (
-        <div className="flex flex-col h-screen font-inter text-slate-900 overflow-hidden">
-            {/* Header */}
-            <header className="fixed top-0 left-0 right-0 z-30 bg-[#FAFAFA]/80 backdrop-blur-md border-b border-[#E5E7EB] h-[72px] flex items-center justify-between px-8" style={{ left: 'var(--sidebar-width, 260px)' }}>
+        <div className="min-h-screen flex flex-col font-inter text-slate-900 bg-transparent selection:bg-primary/10 overflow-hidden">
+            <header className="fixed top-0 left-0 right-0 z-40 bg-[#FAFAFA]/60 backdrop-blur-md border-b border-slate-200 h-[72px] flex items-center justify-between px-8" style={{ left: 'var(--sidebar-width, 240px)' }}>
                 <div className="flex items-center gap-2 text-sm text-[#6B7280]">
                     <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Home</Link>
                     <span>/</span>
-                    <span className="text-[#1A1A1A] font-medium">Chat</span>
+                    <span className="text-[#1A1A1A] font-medium">Messaging</span>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <button className="w-8 h-8 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:text-[#1A1A1A] relative shadow-sm">
-                        <Bell className="w-[16px] h-[16px]" />
-                    </button>
-                    <div className="flex items-center border-l border-[#E5E7EB] pl-4 h-6">
-                        <UserButton appearance={{ elements: { avatarBox: "h-8 w-8 ring-1 ring-slate-200 shadow-sm" } }} />
-                    </div>
+                    <UserButton appearance={{ elements: { avatarBox: "h-8 w-8 ring-1 ring-slate-200 shadow-sm" } }} />
                 </div>
             </header>
 
             <main className="flex-1 mt-[72px] flex relative overflow-hidden">
-                {/* COMING SOON OVERLAY */}
-                <div className="absolute inset-0 bg-[#FAFAFA]/60 backdrop-blur-[4px] z-20 flex items-center justify-center pointer-events-none">
-                    <div className="bg-white shadow-2xl border border-[#E5E7EB] px-10 py-8 rounded-3xl flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-700 pointer-events-auto max-w-sm text-center">
-                        <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center text-green-600 mb-2 rotate-3">
-                            <MessageSquare className="w-8 h-8" />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-[#1A1A1A] mb-2 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>Real-time Chat</h2>
-                            <p className="text-[#6B7280] text-sm font-medium leading-relaxed">
-                                Connect with your travel buddies instantly. We're putting the finishing touches on our messaging engine.
-                            </p>
-                        </div>
-                        <div className="flex flex-col gap-2 w-full mt-2">
-                            <Button asChild className="bg-[#1A1A1A] hover:bg-black text-white rounded-xl px-6 py-2.5 h-auto font-semibold shadow-lg">
-                                <Link href="/dashboard">Back to Dashboard</Link>
-                            </Button>
-                            <span className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-[0.2em] mt-2">Arriving Q2 2026</span>
-                        </div>
-                    </div>
-                </div>
+                <div className="absolute inset-0 z-10 overflow-y-auto custom-scrollbar flex flex-col items-center">
 
-                {/* SIDEBAR MOCKUP */}
-                <div className="w-80 border-r border-[#E5E7EB] bg-white hidden lg:flex flex-col filter blur-[2px] opacity-40 select-none">
-                    <div className="p-5 border-b border-[#E5E7EB]">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
-                            <Input className="pl-9 bg-[#F9FAFB] border-none rounded-xl" placeholder="Search chats..." readOnly />
+                    {/* BACKGROUND BRANDING AREA */}
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 w-full max-w-2xl min-h-[400px]">
+                        <div className="flex flex-col items-center gap-5 pointer-events-auto animate-in fade-in slide-in-from-bottom-6 duration-1000 opacity-20 hover:opacity-100 transition-opacity">
+                            <h2 className="text-4xl font-black text-slate-900 tracking-tighter text-center leading-[1.05]" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                Connect with your<br />travel circle.
+                            </h2>
+
+                            <div className="flex flex-col items-center gap-2.5 text-center">
+                                <div className="h-[2px] w-10 bg-slate-900/10 mb-1" />
+                                <p className="text-[#1A1A1A] text-[9px] font-black uppercase tracking-[0.5em]">
+                                    Coming Very Soon
+                                </p>
+                                <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.15em] opacity-40">
+                                    Ultimate traveler connection
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                        {[
-                            { name: "Manali Adventure", msg: "Alex: Should we book the paragliding?", time: "2m", active: true },
-                            { name: "Goa March 2026", msg: "Sarah: Just shared the resort link!", time: "1h" },
-                            { name: "Sarah Miller", msg: "Are you ready for the trip?", time: "Yesterday" },
-                        ].map((chat, i) => (
-                            <div key={i} className={`p-3 rounded-xl flex items-center gap-3 ${chat.active ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
-                                <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-baseline mb-0.5">
-                                        <h4 className="text-sm font-bold truncate">{chat.name}</h4>
-                                        <span className="text-[10px] text-[#9CA3AF]">{chat.time}</span>
+
+                    {/* ACTIVE CHAT CARD - CENTERED (EXACT PROVIDED DESIGN) */}
+                    <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center px-10">
+                        <AnimatePresence mode="wait">
+                            {activeChatId && (
+                                <motion.div
+                                    key={activeChatId}
+                                    initial={{ opacity: 0, scale: 0.95, y: 30, filter: "blur(10px)" }}
+                                    animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -30, filter: "blur(10px)" }}
+                                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                    className="pointer-events-auto w-full max-w-2xl"
+                                >
+                                    <div className="h-[550px] border shadow-2xl bg-background rounded-2xl flex flex-col overflow-hidden">
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between p-4 border-b bg-card">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full overflow-hidden border border-border">
+                                                    <img src={activeCharacter.avatar} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div>
+                                                    <h1 className="text-base font-bold tracking-tight">{activeCharacter.name}</h1>
+                                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest opacity-70 underline underline-offset-4 decoration-primary/20">Travio</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="ghost" size="icon" onClick={() => setActiveChatId(null)} className="h-8 w-8 rounded-lg hover:bg-muted">
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+
+                                        {/* Body */}
+                                        <div className="flex-1 overflow-hidden">
+                                            <ChatMessageList>
+                                                {thread?.messages.map((message) => (
+                                                    <ChatBubble
+                                                        key={message.id}
+                                                        variant={message.isAi ? "received" : "sent"}
+                                                    >
+                                                        <ChatBubbleAvatar
+                                                            src={message.isAi ? undefined : (user?.imageUrl || "https://i.pravatar.cc/150?u=me")}
+                                                            fallback={message.isAi ? <TravioLogoIcon /> : (user?.firstName?.charAt(0) || "U")}
+                                                            className={message.isAi ? "overflow-hidden" : ""}
+                                                        />
+                                                        <div className="flex flex-col">
+                                                            <div className={`flex items-center gap-2 mb-1 px-1 ${message.isAi ? "justify-start" : "justify-end"}`}>
+                                                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                                                    {message.sender}
+                                                                </span>
+                                                            </div>
+                                                            <ChatBubbleMessage
+                                                                variant={message.isAi ? "received" : "sent"}
+                                                            >
+                                                                {message.text}
+                                                            </ChatBubbleMessage>
+                                                        </div>
+                                                    </ChatBubble>
+                                                ))}
+
+                                                {thread?.isThinking && (
+                                                    <ChatBubble variant="received">
+                                                        <ChatBubbleAvatar
+                                                            fallback={<TravioLogoIcon />}
+                                                            className="overflow-hidden"
+                                                        />
+                                                        <ChatBubbleMessage isLoading />
+                                                    </ChatBubble>
+                                                )}
+                                            </ChatMessageList>
+                                        </div>
+
+                                        {/* Footer */}
+                                        <div className="p-4 border-t bg-card">
+                                            <form
+                                                onSubmit={(e) => {
+                                                    e.preventDefault();
+                                                    if (input.trim()) {
+                                                        handleSend(input);
+                                                        setInput("");
+                                                    }
+                                                }}
+                                                className="relative rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring p-1"
+                                            >
+                                                <ChatInput
+                                                    value={input}
+                                                    onChange={(e) => setInput(e.target.value)}
+                                                    placeholder="Type your message..."
+                                                    className="min-h-12 resize-none rounded-lg bg-background border-0 p-3 shadow-none focus-visible:ring-0"
+                                                />
+                                                <div className="flex items-center p-3 pt-0 justify-between">
+                                                    <div className="flex">
+                                                        <Button variant="ghost" size="icon" type="button" className="h-8 w-8">
+                                                            <Paperclip className="size-4" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" type="button" className="h-8 w-8">
+                                                            <Mic className="size-4" />
+                                                        </Button>
+                                                    </div>
+                                                    <Button type="submit" size="sm" className="ml-auto gap-1.5" disabled={!input.trim()}>
+                                                        Send Message
+                                                        <CornerDownLeft className="size-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-[#6B7280] truncate">{chat.msg}</p>
-                                </div>
-                            </div>
-                        ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    <div className="mt-auto pb-12 pt-20 w-fit pointer-events-auto relative z-40">
+                        <MessageDock
+                            onMessageSend={handleSend}
+                            closeOnSend={false}
+                            className="!relative !bottom-0 !left-0 !translate-x-0"
+                            characters={[
+                                { id: "pranav", name: "Pranav Gawai", avatar: user?.imageUrl || "https://i.pravatar.cc/150" + "?u=pranav", online: false, isPremium: true },
+                                { id: "ananya", name: "Ananya Mehra", avatar: "https://i.pravatar.cc/150" + "?u=ananya", online: false },
+                                { id: "vikram", name: "Vikram Singh", avatar: "https://i.pravatar.cc/150" + "?u=vikram", online: false },
+                                { id: "rahul", name: "Rahul Sharma", avatar: "https://i.pravatar.cc/150" + "?u=rahul", online: false },
+                            ]}
+                        />
                     </div>
                 </div>
 
-                {/* CHAT AREA MOCKUP */}
-                <div className="flex-1 flex flex-col bg-white filter blur-[1px] opacity-40 select-none">
-                    <div className="h-16 border-b border-[#E5E7EB] px-6 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">MA</div>
-                            <div>
-                                <h3 className="text-sm font-bold">Manali Adventure</h3>
-                                <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">4 online</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button size="icon" variant="ghost" className="rounded-full h-9 w-9 text-[#6B7280]"><Phone className="h-4 w-4" /></Button>
-                            <Button size="icon" variant="ghost" className="rounded-full h-9 w-9 text-[#6B7280]"><Video className="h-4 w-4" /></Button>
-                            <Button size="icon" variant="ghost" className="rounded-full h-9 w-9 text-[#6B7280]"><Info className="h-4 w-4" /></Button>
+                {/* SIDEBAR MOCKUP (BLURRED BACKGROUND) */}
+                <div className="w-80 border-r border-slate-200 bg-white/20 hidden lg:flex flex-col filter blur-[4px] opacity-10 select-none backdrop-blur-[1px]">
+                    <div className="p-5 border-b border-slate-100/50">
+                        <div className="relative opacity-40">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                            <Input className="pl-9 bg-slate-100/50 border-none rounded-xl h-9 text-[11px]" placeholder="Search..." readOnly />
                         </div>
                     </div>
-                    <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-                        <div className="flex justify-center"><Badge variant="outline" className="text-[10px] text-[#9CA3AF]">Today</Badge></div>
-                        <div className="flex items-start gap-3 max-w-md">
-                            <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
-                            <div className="bg-slate-100 p-3 rounded-2xl rounded-tl-none">
-                                <p className="text-sm">Hey everyone! Is the itinerary finalized?</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3 max-w-md ml-auto flex-row-reverse">
-                            <div className="w-8 h-8 rounded-full bg-[#0066FF] shrink-0" />
-                            <div className="bg-[#0066FF] text-white p-3 rounded-2xl rounded-tr-none shadow-sm">
-                                <p className="text-sm">Almost there! Just waiting for Sarah.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 border-t border-[#E5E7EB]">
-                        <div className="flex items-center gap-2 bg-[#F9FAFB] p-2 rounded-2xl">
-                            <Button size="icon" variant="ghost" className="rounded-xl text-[#9CA3AF]"><Plus className="h-5 w-5" /></Button>
-                            <Input className="bg-transparent border-none focus-visible:ring-0 text-sm" placeholder="Type a message..." readOnly />
-                            <div className="flex items-center gap-1 pr-1">
-                                <Button size="icon" variant="ghost" className="rounded-xl text-[#9CA3AF] hidden sm:flex"><ImageIcon className="h-5 w-5" /></Button>
-                                <Button size="icon" variant="ghost" className="rounded-xl text-[#9CA3AF] hidden sm:flex"><Paperclip className="h-5 w-5" /></Button>
-                                <Button size="icon" variant="ghost" className="rounded-xl text-[#9CA3AF]"><Smile className="h-5 w-5" /></Button>
-                                <Button size="icon" className="bg-[#0066FF] hover:bg-[#0066FF]/90 text-white rounded-xl h-9 w-9 shadow-md"><Send className="h-4 w-4" /></Button>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+
+                {/* CHAT AREA MOCKUP (BLURRED BACKGROUND) */}
+                <div className="flex-1 flex flex-col bg-white/10 filter blur-[8px] opacity-[0.03] select-none backdrop-blur-[2px]">
+                    <div className="h-16 border-b border-slate-200/50" />
+                    <div className="flex-1" />
                 </div>
             </main>
         </div>

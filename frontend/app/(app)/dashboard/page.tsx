@@ -273,7 +273,7 @@ export default function DashboardPage() {
                     </div>
                 </header>
 
-                <main className="flex-1 w-full flex flex-col relative z-10 bg-[#FAFAFA]">
+                <main className="flex-1 w-full flex flex-col relative z-10">
                     <div className="max-w-6xl w-full mx-auto px-8 pt-4 pb-20 space-y-10 relative z-10">
 
                         {loading ? (

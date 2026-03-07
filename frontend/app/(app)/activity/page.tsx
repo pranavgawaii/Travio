@@ -41,7 +41,7 @@ export default function ActivityPage() {
     return (
         <div className="min-h-screen flex flex-col font-inter text-slate-900 overflow-hidden">
             {/* Header */}
-            <header className="fixed top-0 left-0 right-0 z-30 bg-[#FAFAFA]/80 backdrop-blur-md border-b border-[#E5E7EB] h-[72px] flex items-center justify-between px-8" style={{ left: 'var(--sidebar-width, 260px)' }}>
+            <header className="fixed top-0 left-0 right-0 z-30 bg-[#FAFAFA]/60 backdrop-blur-md border-b border-[#E5E7EB] h-[72px] flex items-center justify-between px-8" style={{ left: 'var(--sidebar-width, 240px)' }}>
                 <div className="flex items-center gap-2 text-sm text-[#6B7280]">
                     <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Home</Link>
                     <span>/</span>
@@ -58,7 +58,7 @@ export default function ActivityPage() {
 
             <main className="flex-1 mt-[72px] flex relative h-[calc(100vh-72px)]">
                 {/* PAGE SIDEBAR */}
-                <div className="w-[280px] border-r border-[#E5E7EB] bg-[#FAFAFA] flex flex-col shrink-0">
+                <div className="w-[280px] border-r border-[#E5E7EB] bg-[#FAFAFA]/40 backdrop-blur-[2px] flex flex-col shrink-0">
                     <div className="p-6">
                         <h2 className="text-xl font-bold tracking-tight mb-6" style={{ fontFamily: "'Quicksand', sans-serif" }}>Notifications</h2>
                         <div className="space-y-1">
@@ -92,7 +92,7 @@ export default function ActivityPage() {
                 </div>
 
                 {/* ACTIVITY FEED AREA */}
-                <div className="flex-1 bg-white overflow-y-auto relative">
+                <div className="flex-1 overflow-y-auto relative">
                     <div className="max-w-3xl mx-auto py-10 px-8">
                         <div className="flex items-center justify-between mb-8">
                             <div>

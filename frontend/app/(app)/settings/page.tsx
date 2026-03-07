@@ -50,7 +50,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Settings Horizontal Tabs */}
-                <div className="flex gap-8 border-b border-[#E5E7EB] mb-8 overflow-x-auto hide-scrollbar">
+                <div className="flex bg-slate-100/80 p-1 rounded-xl mb-8 overflow-x-auto no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shadow-inner max-w-fit">
                     {SETTING_NAV.map((item) => {
                         const isActive = activeTab === item.id;
                         return (
@@ -58,11 +58,12 @@ export default function SettingsPage() {
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id)}
                                 className={cn(
-                                    "px-1 py-3 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap",
+                                    "px-5 py-2 text-[14px] font-bold rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 whitespace-nowrap h-full",
                                     isActive
-                                        ? "text-[#0066FF] border-[#0066FF]"
-                                        : "text-[#6B7280] hover:text-[#1A1A1A] border-transparent hover:border-[#E5E7EB]"
+                                        ? "bg-white text-slate-900 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-700"
                                 )}
+                                style={{ fontFamily: "'Quicksand', sans-serif" }}
                             >
                                 {item.label}
                             </button>

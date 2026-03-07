@@ -11,7 +11,9 @@ export async function POST(req: Request) {
 
         // 1. Goa March 2026
         const goaExists = await Trip.findOne({ title: "Goa March 2026", ownerId: userId });
-        if (!goaExists) {
+        if (goaExists && goaExists.days.length < 5) await Trip.deleteOne({ _id: goaExists._id });
+        const goaExistsFixed = await Trip.findOne({ title: "Goa March 2026", ownerId: userId });
+        if (!goaExistsFixed) {
             await Trip.create({
                 title: "Goa March 2026",
                 destination: "Goa, India",
@@ -55,6 +57,22 @@ export async function POST(req: Request) {
                             { title: "Spice Plantation Lunch", time: "2:00 PM", location: "Ponda", category: "Food", cost: 800 },
                             { title: "Beach Volleyball", time: "5:00 PM", location: "Majorda", category: "Leisure", cost: 0 }
                         ]
+                    },
+                    {
+                        label: "Day 4 — Mar 13",
+                        date: new Date("2026-03-13"),
+                        activities: [
+                            { title: "Shopping at Mapusa", time: "11:00 AM", location: "Mapusa Market", category: "Activity", cost: 2000 },
+                            { title: "Sunset Cruise", time: "5:30 PM", location: "Mandovi River", category: "Sightseeing", cost: 1500 }
+                        ]
+                    },
+                    {
+                        label: "Day 5 — Mar 14",
+                        date: new Date("2026-03-14"),
+                        activities: [
+                            { title: "Checkout and Breakfast", time: "09:30 AM", location: "Resort", category: "Stay", cost: 0 },
+                            { title: "Drive to Airport", time: "11:00 AM", location: "Dabolim", category: "Transport", cost: 1200 }
+                        ]
                     }
                 ],
                 expenses: [
@@ -74,7 +92,9 @@ export async function POST(req: Request) {
 
         // 2. Manali Adventure
         const manaliExists = await Trip.findOne({ title: "Manali Adventure", ownerId: userId });
-        if (!manaliExists) {
+        if (manaliExists && manaliExists.days.length < 6) await Trip.deleteOne({ _id: manaliExists._id });
+        const manaliExistsFixed = await Trip.findOne({ title: "Manali Adventure", ownerId: userId });
+        if (!manaliExistsFixed) {
             await Trip.create({
                 title: "Manali Adventure",
                 destination: "Manali, Himachal Pradesh",
@@ -117,6 +137,32 @@ export async function POST(req: Request) {
                             { title: "Morning Drive to Rohtang", time: "06:00 AM", location: "Rohtang", category: "Transport", cost: 4000 },
                             { title: "Snow Activities", time: "10:00 AM", location: "Rohtang Pass", category: "Adventure", cost: 1500 },
                             { title: "River Rafting", time: "4:00 PM", location: "Beas River", category: "Adventure", cost: 1200 }
+                        ]
+                    },
+                    {
+                        label: "Day 4 — Kasol Trip",
+                        date: new Date("2026-05-18"),
+                        activities: [
+                            { title: "Drive to Kasol", time: "09:00 AM", location: "Parvati Valley", category: "Transport", cost: 2000 },
+                            { title: "Manikaran Sahib", time: "12:00 PM", location: "Manikaran", category: "Sightseeing", cost: 0 },
+                            { title: "Cafe Relaxing", time: "2:30 PM", location: "Kasol", category: "Food", cost: 1200 }
+                        ]
+                    },
+                    {
+                        label: "Day 5 — Vashisht Village",
+                        date: new Date("2026-05-19"),
+                        activities: [
+                            { title: "Hot Springs", time: "10:00 AM", location: "Vashisht", category: "Leisure", cost: 0 },
+                            { title: "Jogini Waterfall Trek", time: "12:00 PM", location: "Vashisht", category: "Adventure", cost: 0 },
+                            { title: "Souvenir Shopping", time: "6:00 PM", location: "Mall Road", category: "Shopping", cost: 3000 }
+                        ]
+                    },
+                    {
+                        label: "Day 6 — Departure",
+                        date: new Date("2026-05-20"),
+                        activities: [
+                            { title: "Breakfast at Cafe 1947", time: "09:00 AM", location: "Old Manali", category: "Food", cost: 800 },
+                            { title: "Bus to Delhi", time: "12:00 PM", location: "Volvo Stand", category: "Transport", cost: 3000 }
                         ]
                     }
                 ],

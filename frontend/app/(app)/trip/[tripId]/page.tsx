@@ -47,7 +47,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@frontend/ui/ui/input";
 import { Textarea } from "@frontend/ui/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@frontend/ui/ui/tabs";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@frontend/ui/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from "@frontend/ui/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@frontend/ui/ui/avatar";
 import { Checkbox } from "@frontend/ui/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@frontend/ui/ui/dropdown-menu";
@@ -78,8 +78,27 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
         disabled: !canEdit
     });
     const [editForm, setEditForm] = useState(item);
+
+    useEffect(() => {
+        setEditForm(item);
+    }, [item]);
+
     const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
     const isFlight = item.category === 'Flight';
+
+    const commentCount = actIdx * 3 + (actIdx === 0 ? 2 : 0);
+    const dummyComments = Array.from({ length: commentCount }).map((_, i) => {
+        const member = (tripMembers || [])[i % (tripMembers?.length || 1)];
+        const isYou = user?.id === member?.userId;
+        return {
+            id: i,
+            text: ["Can't wait to check this out!", "Are we booking this in advance?", "Looks a bit expensive, but I'm down.", "Let's make sure we leave early for this.", "I'll handle the tickets.", "Who else is joining this?"][i % 6],
+            user: isYou ? (user?.fullName || user?.firstName || "You") : (member?.name || "Traveler"),
+            avatar: isYou ? user?.imageUrl : (member?.avatar || `https://ui-avatars.com/api/?name=User`),
+            time: `${i + 1}h ago`,
+            isYou: isYou
+        };
+    });
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
@@ -103,16 +122,28 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
                         </div>
                         <div className="flex items-center justify-between mt-1 pt-3 border-t border-slate-50">
                             <div className="flex -space-x-1.5">
-                                {(tripMembers || []).slice(0, 2).map((m: any, i: number) => (
-                                    <div key={i} className="h-6 w-6 rounded-full border border-white bg-slate-200 overflow-hidden flex items-center justify-center shadow-sm">
-                                        <div className="relative h-full w-full">
-                                            <Image
-                                                src={normalizeRemoteImage(i === 0 && user ? user.imageUrl : (m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`), 96, 65)}
-                                                alt={m.name || "Traveler"}
-                                                fill
-                                                sizes={THUMBNAIL_IMAGE_SIZES}
-                                                className="object-cover"
-                                            />
+                                {(tripMembers || []).slice(0, 4).map((m: any, i: number, arr: any[]) => (
+                                    <div
+                                        key={i}
+                                        className="group/avatar relative rounded-full border-[1.5px] border-white bg-slate-200 shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:z-50 cursor-pointer"
+                                        style={{ zIndex: arr.length - i }}
+                                    >
+                                        <Image
+                                            src={normalizeRemoteImage(i === 0 && user ? user.imageUrl : (m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`), 96, 65)}
+                                            alt={m.name || "Traveler"}
+                                            width={24}
+                                            height={24}
+                                            className="w-6 h-6 rounded-full object-cover"
+                                        />
+                                        {/* Tooltip */}
+                                        <div
+                                            className="pointer-events-none absolute left-1/2 z-[100] whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-bold text-white opacity-0 shadow-xl transition-all duration-200 group-hover/avatar:-translate-y-1 group-hover/avatar:opacity-100"
+                                            style={{
+                                                top: '-28px', transform: "translateX(-50%)"
+                                            }}
+                                        >
+                                            {m.name || "Traveler"}
+                                            <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-slate-900" />
                                         </div>
                                     </div>
                                 ))}
@@ -179,26 +210,68 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
                                 <Textarea
                                     value={editForm.notes}
                                     onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                                    className="min-h-[120px] rounded-xl border-slate-200 focus-visible:ring-[#3b82f6]/20 resize-none"
+                                    className="min-h-[80px] rounded-xl border-slate-200 focus-visible:ring-[#3b82f6]/20 resize-none"
                                 />
+                            </div>
+
+                            {/* COMMENTS SECTION */}
+                            <div className="pt-6 border-t border-slate-100">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-4 flex items-center justify-between">
+                                    Discussion
+                                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{dummyComments.length}</span>
+                                </label>
+                                <div className="space-y-4 mb-4">
+                                    {dummyComments.length === 0 ? (
+                                        <p className="text-sm text-slate-400 italic">No comments yet. Start the discussion!</p>
+                                    ) : (
+                                        dummyComments.map((comment) => (
+                                            <div key={comment.id} className="flex gap-3">
+                                                <Avatar className="h-8 w-8 shrink-0 border border-slate-200">
+                                                    <AvatarImage src={normalizeRemoteImage(comment.avatar || "", 32, 21)} />
+                                                    <AvatarFallback className="bg-slate-100 text-[10px] font-bold">{comment.user[0]}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 bg-slate-50 rounded-2xl rounded-tl-none p-3 border border-slate-100">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-[13px] font-bold text-slate-900" style={{ fontFamily: "'Quicksand', sans-serif" }}>{comment.user}</span>
+                                                            {comment.isYou && <Badge className="bg-blue-50 text-blue-600 hover:bg-blue-50 border-0 rounded text-[9px] px-1 py-0 h-4">You</Badge>}
+                                                        </div>
+                                                        <span className="text-[10px] font-medium text-slate-400">{comment.time}</span>
+                                                    </div>
+                                                    <p className="text-[13px] text-slate-600 leading-snug">{comment.text}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <Input placeholder="Type a message..." className="h-10 rounded-xl border-slate-200 focus-visible:ring-[#0066FF]/20 text-[13px]" />
+                                    <Button size="icon" className="h-10 w-10 shrink-0 rounded-xl bg-[#0066FF] hover:bg-[#0066FF]/90 text-white shadow-sm">
+                                        <MessageSquare className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div className="p-8 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
-                        <Button
-                            variant="ghost"
-                            onClick={() => deleteActivity(dayIdx, item._id)}
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50 font-bold rounded-xl px-6"
-                        >
-                            <Trash2 className="h-4 w-4 mr-2" /> Delete
-                        </Button>
-                        <div className="flex gap-3">
+                        <SheetClose asChild>
                             <Button
-                                onClick={() => updateActivity(dayIdx, item._id, editForm)}
-                                className="bg-[#3b82f6] hover:bg-blue-600 text-white font-bold rounded-xl px-8 h-12 shadow-sm"
+                                variant="ghost"
+                                onClick={() => deleteActivity(dayIdx, item._id)}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50 font-bold rounded-xl px-6"
                             >
-                                Save Changes
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
                             </Button>
+                        </SheetClose>
+                        <div className="flex gap-3">
+                            <SheetClose asChild>
+                                <Button
+                                    onClick={() => updateActivity(dayIdx, item._id, editForm)}
+                                    className="bg-[#3b82f6] hover:bg-blue-600 text-white font-bold rounded-xl px-8 h-12 shadow-sm"
+                                >
+                                    Save Changes
+                                </Button>
+                            </SheetClose>
                         </div>
                     </div>
                 </SheetContent>
@@ -321,6 +394,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [isCoverHidden, setIsCoverHidden] = useState(false);
+    const [transactionFilter, setTransactionFilter] = useState("All");
     const fetchTrip = useCallback(async () => {
         try {
             setLoading(true);
@@ -490,9 +564,13 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     };
 
     const addActivity = async (dayIdx: number) => {
-        const newAct = { title: "New Activity", time: "10:00 AM", location: "Location", notes: "", category: "Misc", cost: 0 };
+        const newAct = { _id: `temp_${Date.now()}`, title: "New Activity", time: "10:00 AM", location: "Location", notes: "", category: "Misc", cost: 0 };
         const newDays = [...days];
+
+        // Ensure we clone the specific day to avoid direct state mutation
+        newDays[dayIdx] = { ...newDays[dayIdx] };
         newDays[dayIdx].activities = [...(newDays[dayIdx].activities || []), newAct as any];
+
         setDays(newDays);
         await saveTrip({ days: newDays });
         fetchTrip();
@@ -778,18 +856,18 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                 </div>
             </div>
 
-            {/* TABS CONTAINER */}
-            <Tabs defaultValue="itinerary" onValueChange={setActiveTab} className="w-full flex-1 flex flex-col mt-0 border-t-0 p-0 shadow-none">
-                <div className="bg-white border-b border-[#E5E7EB] z-20 px-8 w-full">
-                    <div className="max-w-[1400px] mx-auto w-full">
-                        <TabsList className="flex gap-8 justify-start h-auto bg-transparent border-0 outline-none w-full overflow-x-auto no-scrollbar shadow-none rounded-none">
+            <Tabs defaultValue="itinerary" onValueChange={setActiveTab} className="w-full flex-1 flex flex-col mt-0 border-0 p-0 shadow-none relative">
+                <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-40 w-full overflow-hidden py-3">
+                    <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8">
+                        <TabsList className="inline-flex h-11 items-center justify-start rounded-xl bg-slate-100/80 p-1 text-slate-500 shadow-inner w-full sm:w-auto overflow-x-auto no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {['Itinerary', 'Budget', 'Checklist', 'Files', 'Members'].map((tab) => {
                                 const tabValue = tab.toLowerCase() === 'checklist' ? 'checklists' : tab.toLowerCase();
                                 return (
                                     <TabsTrigger
                                         key={tab}
                                         value={tabValue}
-                                        className="px-0 py-[18px] text-[15px] font-medium text-[#6B7280] data-[state=active]:text-[#0066FF] data-[state=active]:border-b-[#0066FF] border-b-[2px] border-transparent rounded-none transition-colors data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-slate-900 focus:outline-none relative translate-y-[1px]"
+                                        className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-1.5 text-[14px] font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm hover:text-slate-700 h-full"
+                                        style={{ fontFamily: "'Quicksand', sans-serif" }}
                                     >
                                         {tab}
                                     </TabsTrigger>
@@ -975,13 +1053,13 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                             {/* 4 Column Top Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {/* Total Spent */}
-                                <div className="bg-white dark:bg-[#2A2A2A] p-5 rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm">
-                                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-[#3b82f6] flex items-center justify-center mb-3.5">
-                                        <Wallet className="h-4 w-4 stroke-[2.5px]" />
+                                <div className="bg-white dark:bg-[#2A2A2A] p-4 rounded-xl border border-slate-200 dark:border-[#374151] shadow-sm">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[#3b82f6] flex items-center justify-center mb-2.5">
+                                        <Wallet className="h-3.5 w-3.5 stroke-[2.5px]" />
                                     </div>
-                                    <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Total Spent</p>
-                                    <div className="flex items-end gap-3">
-                                        <span className="text-[28px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{totalBudget.toLocaleString()}</span>
+                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Spent</p>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-[22px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{totalBudget.toLocaleString()}</span>
                                     </div>
                                 </div>
 
@@ -992,13 +1070,13 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                     const yourBalance = yourTotalPaid - yourShare;
                                     const isOwed = yourBalance >= 0;
                                     return (
-                                        <div className="bg-white dark:bg-[#2A2A2A] p-5 rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm">
-                                            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center mb-3.5", isOwed ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
-                                                <RefreshCcw className="h-4 w-4 stroke-[2.5px]" />
+                                        <div className="bg-white dark:bg-[#2A2A2A] p-4 rounded-xl border border-slate-200 dark:border-[#374151] shadow-sm">
+                                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2.5", isOwed ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
+                                                <RefreshCcw className="h-3.5 w-3.5 stroke-[2.5px]" />
                                             </div>
-                                            <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">{isOwed ? "They Owe You" : "You Owe"}</p>
-                                            <div className="flex items-end gap-3">
-                                                <span className={cn("text-[28px] font-bold tracking-tight", isOwed ? "text-emerald-500" : "text-rose-500")} style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">{isOwed ? "They Owe You" : "You Owe"}</p>
+                                            <div className="flex items-end gap-2">
+                                                <span className={cn("text-[22px] font-bold tracking-tight", isOwed ? "text-emerald-500" : "text-rose-500")} style={{ fontFamily: "'Quicksand', sans-serif" }}>
                                                     {isOwed ? "+" : "-"}₹{Math.abs(Math.round(yourBalance)).toLocaleString()}
                                                 </span>
                                             </div>
@@ -1007,41 +1085,142 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                 })()}
 
                                 {/* Average Per Person */}
-                                <div className="bg-white dark:bg-[#2A2A2A] p-5 rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm">
-                                    <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center mb-3.5">
-                                        <Users className="h-4 w-4 stroke-[2.5px]" />
+                                <div className="bg-white dark:bg-[#2A2A2A] p-4 rounded-xl border border-slate-200 dark:border-[#374151] shadow-sm">
+                                    <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center mb-2.5">
+                                        <Users className="h-3.5 w-3.5 stroke-[2.5px]" />
                                     </div>
-                                    <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Avg Per Person</p>
-                                    <div className="flex items-end gap-3">
-                                        <span className="text-[28px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{Math.round(totalBudget / (trip.members?.length || 1)).toLocaleString()}</span>
+                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Avg Per Person</p>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-[22px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{Math.round(totalBudget / (trip.members?.length || 1)).toLocaleString()}</span>
                                     </div>
                                 </div>
 
                                 {/* Budget Remaining (Static Demo for UX) */}
-                                <div className="bg-white dark:bg-[#2A2A2A] p-5 rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm relative overflow-hidden">
+                                <div className="bg-white dark:bg-[#2A2A2A] p-4 rounded-xl border border-slate-200 dark:border-[#374151] shadow-sm relative overflow-hidden">
                                     <div className="absolute right-0 top-0 h-full w-1.5 bg-emerald-500"></div>
-                                    <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center mb-3.5">
-                                        <PieChart className="h-4 w-4 stroke-[2.5px]" />
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center mb-2.5">
+                                        <PieChart className="h-3.5 w-3.5 stroke-[2.5px]" />
                                     </div>
-                                    <p className="text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Budget Target</p>
+                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Budget Target</p>
                                     <div className="flex items-end gap-2">
-                                        <span className="text-[28px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{totalBudget.toLocaleString()}</span>
+                                        <span className="text-[22px] font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{totalBudget.toLocaleString()}</span>
                                     </div>
-                                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-4">
+                                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3">
                                         <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: "100%" }}></div>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Premium Category Breakdown */}
+                            {budgetData.length > 0 && (() => {
+                                const cats = budgetData.reduce((acc: any, curr: Expense) => {
+                                    acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+                                    return acc;
+                                }, {});
+
+                                const totalCat = Object.values(cats).reduce((a: any, b: any) => a + b, 0) || 1;
+
+                                const colors: Record<string, string> = {
+                                    Food: "#f97316", // orange-500
+                                    Stay: "#3b82f6", // blue-500
+                                    Travel: "#a855f7", // purple-500
+                                    Transport: "#8b5cf6", // violet-500
+                                    Adventure: "#10b981", // emerald-500
+                                    Activities: "#14b8a6", // teal-500
+                                    Misc: "#94a3b8" // slate-400
+                                };
+
+                                const sortedCats = Object.entries(cats).sort((a: [string, any], b: [string, any]) => Number(b[1]) - Number(a[1]));
+
+                                let currentDeg = 0;
+                                const gradientStops = sortedCats.map(([cat, amount]: any) => {
+                                    const percentage = (Number(amount) / totalCat) * 100;
+                                    const stop = `${colors[cat] || colors.Misc} ${currentDeg}%, ${colors[cat] || colors.Misc} ${currentDeg + percentage}%`;
+                                    currentDeg += percentage;
+                                    return stop;
+                                }).join(", ");
+
+                                return (
+                                    <div className="bg-white dark:bg-[#2A2A2A] rounded-[1.25rem] border border-slate-200 dark:border-[#374151] p-8 shadow-sm flex flex-col md:flex-row items-center gap-10 lg:gap-16 mt-8 overflow-hidden relative">
+                                        {/* Decorative blurred blob */}
+                                        <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl pointer-events-none"></div>
+
+                                        <div className="w-full md:w-1/3 flex flex-col items-center">
+                                            <h3 className="font-bold text-slate-900 text-xl mb-8 tracking-tight self-start md:self-center" style={{ fontFamily: "'Quicksand', sans-serif" }}>Spending Split</h3>
+                                            <div className="relative w-48 h-48 rounded-full shadow-md transition-transform duration-500 hover:scale-105" style={{ background: `conic-gradient(${gradientStops || "#f8fafc 0% 100%"})` }}>
+                                                {/* Inner white circle for Donut effect */}
+                                                <div className="absolute inset-0 m-auto w-[130px] h-[130px] bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                                                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.15em] mb-0.5">Total</span>
+                                                    <span className="text-2xl font-bold text-slate-900 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>₹{totalBudget.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="w-full md:w-2/3 flex flex-col gap-5 pt-4 md:pt-14 relative z-10">
+                                            {sortedCats.map(([cat, amount]: any) => {
+                                                const pct = Math.round((Number(amount) / totalCat) * 100);
+                                                return (
+                                                    <div key={cat} className="group relative">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: colors[cat] || colors.Misc }}></div>
+                                                                <span className="text-sm font-semibold text-slate-700">{cat}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="text-[13px] font-bold text-slate-400 w-8 text-right">{pct}%</span>
+                                                                <span className="text-[15px] font-bold text-slate-900 w-16 text-right">₹{amount.toLocaleString()}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-inner">
+                                                            <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${pct}%`, backgroundColor: colors[cat] || colors.Misc }}></div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Recent Expenses Table Section */}
                             <div className="bg-white dark:bg-[#2A2A2A] rounded-[1.25rem] border border-slate-200 dark:border-[#374151] shadow-sm overflow-hidden mt-8">
                                 <div className="px-6 py-5 border-b border-slate-100 dark:border-[#374151] flex items-center justify-between">
                                     <h3 className="font-bold text-slate-900 text-lg tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>Transactions</h3>
                                     <div className="flex items-center gap-2 hidden sm:flex">
-                                        <button className="text-[13px] font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2 transition-colors">
-                                            <Filter className="h-3.5 w-3.5" /> Filter
-                                        </button>
-                                        <button className="text-[13px] font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2 transition-colors">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button className="text-[13px] font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2 transition-colors">
+                                                    <Filter className="h-3.5 w-3.5" /> {transactionFilter === 'All' ? 'Filter' : transactionFilter}
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-slate-200 p-2 min-w-[160px]">
+                                                {['All', 'Food', 'Stay', 'Travel', 'Transport', 'Activities', 'Misc'].map(cat => (
+                                                    <DropdownMenuItem key={cat} onClick={() => setTransactionFilter(cat)} className="rounded-lg font-medium cursor-pointer py-2 text-slate-700 text-[13px]" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                        {cat}
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <button
+                                            onClick={() => {
+                                                const headers = "Expense,Paid By,Category,Amount\n";
+                                                const rows = budgetData.map(e => `"${e.name}",${e.paidByName},${e.category},${e.amount}`);
+                                                const csv = headers + rows.join("\n");
+                                                const blob = new Blob([csv], { type: 'text/csv' });
+                                                const url = window.URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.style.display = 'none';
+                                                a.href = url;
+                                                a.download = `${trip?.title || 'Trip'}_Expenses.csv`;
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                setTimeout(() => {
+                                                    document.body.removeChild(a);
+                                                    window.URL.revokeObjectURL(url);
+                                                }, 100);
+                                            }}
+                                            className="text-[13px] font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                        >
                                             <Download className="h-3.5 w-3.5" /> Export
                                         </button>
                                     </div>
@@ -1066,7 +1245,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
-                                                {[...budgetData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense: Expense, idx) => {
+                                                {[...budgetData].filter(e => transactionFilter === 'All' || e.category === transactionFilter).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense: Expense, idx) => {
                                                     const m = trip.members.find((m: TripMember) => m.userId === expense.paidBy) || trip.members.find((m: TripMember) => m.name === expense.paidByName);
                                                     const isYou = !!(user && expense.paidBy === user.id);
                                                     const payeeName = isYou ? (user!.fullName || user!.firstName || 'You') : (m?.name || expense.paidByName || 'Member');

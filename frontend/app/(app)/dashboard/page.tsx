@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus, UploadCloud, ArrowUpRight, ArrowDownRight, MapPin, Compass, User, Paperclip, Sparkles, Loader2, Bell, ArrowUp, MessageSquare } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, UploadCloud, ArrowUpRight, ArrowDownRight, MapPin, Compass, User, Paperclip, Sparkles, Loader2, Bell, ArrowUp, MessageSquare, Wallet, Users, Bookmark } from "lucide-react";
 import { Button } from "@frontend/ui/ui/button";
 import { Badge } from "@frontend/ui/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@frontend/ui/ui/dialog";
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                         ) : (
 
                             <>
-                                <div className="flex items-end justify-between">
+                                <div className="flex items-end justify-between mb-8">
                                     <div>
                                         <h1 className="text-3xl font-bold text-[#1A1A1A] mb-1">Trip Dashboard</h1>
                                         <p className="text-[#6B7280] text-sm">Manage, collaborate, and plan your upcoming adventures.</p>
@@ -320,8 +320,6 @@ export default function DashboardPage() {
                                         New Trip
                                     </button>
                                 </div>
-
-
 
                                 {/* SECTION 3 — QUICK ACTIONS */}
                                 <div className="mb-12">

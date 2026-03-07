@@ -66,7 +66,7 @@ export function Sidebar() {
             )}
         >
             {/* ── Logo ── */}
-            <div className={cn("p-6 flex items-center shrink-0", collapsed ? "justify-center" : "justify-between")}>
+            <div className={cn("py-6 flex items-center shrink-0", collapsed ? "px-0 justify-center w-full" : "px-6 justify-between")}>
                 {!collapsed && (
                     <Link href="/dashboard" className="flex items-center gap-2 text-[#0066FF] group">
                         <div className="flex items-center justify-center relative overflow-hidden h-8 w-8 shrink-0">

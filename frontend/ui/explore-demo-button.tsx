@@ -57,9 +57,7 @@ export default function ExploreDemoButton({ variant = "hero" }: { variant?: "her
             >
                 {loading ? (
                     <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                ) : (
-                    <div className="w-2 h-2 rounded-full bg-blue-400 mr-2 group-hover:scale-125 transition-transform" />
-                )}
+                ) : null}
                 Try Demo
             </Button>
         );

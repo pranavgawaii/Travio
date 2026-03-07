@@ -1118,7 +1118,8 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                     return acc;
                                 }, {});
 
-                                const totalCat = Object.values(cats).reduce((a: any, b: any) => a + b, 0) || 1;
+                                const totalCatRaw = Object.values(cats).reduce((a: number, b: unknown) => a + Number(b), 0);
+                                const totalCat: number = totalCatRaw || 1;
 
                                 const colors: Record<string, string> = {
                                     Food: "#f97316", // orange-500
@@ -1130,10 +1131,10 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                     Misc: "#94a3b8" // slate-400
                                 };
 
-                                const sortedCats = Object.entries(cats).sort((a: [string, any], b: [string, any]) => Number(b[1]) - Number(a[1]));
+                                const sortedCats = Object.entries(cats).sort((a: [string, unknown], b: [string, unknown]) => Number(b[1]) - Number(a[1]));
 
                                 let currentDeg = 0;
-                                const gradientStops = sortedCats.map(([cat, amount]: any) => {
+                                const gradientStops = sortedCats.map(([cat, amount]) => {
                                     const percentage = (Number(amount) / totalCat) * 100;
                                     const stop = `${colors[cat] || colors.Misc} ${currentDeg}%, ${colors[cat] || colors.Misc} ${currentDeg + percentage}%`;
                                     currentDeg += percentage;
@@ -1157,8 +1158,9 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                         </div>
 
                                         <div className="w-full md:w-2/3 flex flex-col gap-5 pt-4 md:pt-14 relative z-10">
-                                            {sortedCats.map(([cat, amount]: any) => {
-                                                const pct = Math.round((Number(amount) / totalCat) * 100);
+                                            {sortedCats.map(([cat, amount]) => {
+                                                const amountNum = Number(amount);
+                                                const pct = Math.round((amountNum / totalCat) * 100);
                                                 return (
                                                     <div key={cat} className="group relative">
                                                         <div className="flex justify-between items-center mb-2">
@@ -1168,7 +1170,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                                             </div>
                                                             <div className="flex items-center gap-3">
                                                                 <span className="text-[13px] font-bold text-slate-400 w-8 text-right">{pct}%</span>
-                                                                <span className="text-[15px] font-bold text-slate-900 w-16 text-right">₹{amount.toLocaleString()}</span>
+                                                                <span className="text-[15px] font-bold text-slate-900 w-16 text-right">₹{amountNum.toLocaleString()}</span>
                                                             </div>
                                                         </div>
                                                         <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-inner">

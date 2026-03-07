@@ -29,21 +29,6 @@ export const mediaManifest = {
       "1200": "/optimized/dashboardPreview-1200.webp"
     }
   },
-  "curatedRoadTrip": {
-    "usage": "card",
-    "source": "/hero-bg.jpg",
-    "blurDataURL": "data:image/webp;base64,UklGRpwAAABXRUJQVlA4IJAAAAAQBQCdASoUABQAPwFwrFErJiQiqA1RYCAJYgC1ELGA7KN9Cc97pbpXmCNYLbrNACagAP7aXOF+JyCpZiBiOA1mmCq62E82h6Y40sX6MGWoW+uLmynMWGptsoPMbprzys8ygTEB5K0o2T/B1qJwWdMmHJGQ1CzoZoGAKi5uZP7Q1AowfZ/kmb3mAaAHcWEAAAA=",
-    "avif": {
-      "400": "/optimized/curatedRoadTrip-400.avif",
-      "800": "/optimized/curatedRoadTrip-800.avif",
-      "1200": "/optimized/curatedRoadTrip-1200.avif"
-    },
-    "webp": {
-      "400": "/optimized/curatedRoadTrip-400.webp",
-      "800": "/optimized/curatedRoadTrip-800.webp",
-      "1200": "/optimized/curatedRoadTrip-1200.webp"
-    }
-  },
   "curatedMountains": {
     "usage": "card",
     "source": "/hero-section.png",

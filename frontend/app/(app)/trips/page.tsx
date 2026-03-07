@@ -138,7 +138,7 @@ export default function TripsPage() {
                         <p className="text-xs font-medium text-[#6B7280] mb-3">Total Budget</p>
                         <div className="flex items-end gap-3">
                             <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
-                                ${(trips.reduce((acc, t) => acc + (t.expenses?.reduce((sum, e) => sum + e.amount, 0) || 0), 0) / 1000).toFixed(1)}k
+                                ₹{(trips.reduce((acc, t) => acc + (t.expenses?.reduce((sum, e) => sum + e.amount, 0) || 0), 0) / 1000).toFixed(1)}k
                             </span>
                             {isDemoUser && (
                                 <div className="flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-100 px-1.5 py-0.5 rounded mb-1 border border-red-200">

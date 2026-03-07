@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus, UploadCloud, ArrowUpRight, ArrowDownRight, MapPin, Compass, User, Paperclip, Sparkles, Loader2, Bell, ArrowUp } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, UploadCloud, ArrowUpRight, ArrowDownRight, MapPin, Compass, User, Paperclip, Sparkles, Loader2, Bell, ArrowUp, MessageSquare } from "lucide-react";
 import { Button } from "@frontend/ui/ui/button";
 import { Badge } from "@frontend/ui/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@frontend/ui/ui/dialog";
@@ -15,9 +15,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@frontend/ui/ui/popover
 import { CARD_IMAGE_SIZES, getLocalBlurDataURL, getLocalMediaSrc, normalizeRemoteImage } from "@shared/media";
 import { cn } from "@shared/utils";
 import { AvatarGroup } from "@frontend/ui/ui/avatar-group";
+import { NotificationBell } from "@frontend/ui/notification-bell";
 
 // Types
 interface TripMember { userId: string; name: string; avatar: string; role: string; }
+
+
 interface TripData {
     _id: string;
     title: string;
@@ -35,32 +38,28 @@ interface TripData {
 
 const COVER_OPTIONS = [
     {
-        key: "dashboardPreview",
-        label: "Signature",
-        url: getLocalMediaSrc("dashboardPreview", 1200) ?? "/optimized/dashboardPreview-1200.avif",
-        thumbnail: getLocalMediaSrc("dashboardPreview", 400) ?? "/optimized/dashboardPreview-400.avif",
-        blurDataURL: getLocalBlurDataURL("dashboardPreview"),
-    },
-    {
         key: "curatedRoadTrip",
-        label: "Road Trip",
-        url: getLocalMediaSrc("curatedRoadTrip", 1200) ?? "/optimized/curatedRoadTrip-1200.avif",
-        thumbnail: getLocalMediaSrc("curatedRoadTrip", 400) ?? "/optimized/curatedRoadTrip-400.avif",
-        blurDataURL: getLocalBlurDataURL("curatedRoadTrip"),
+        label: "Adventure",
+        url: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=1200",
+        thumbnail: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=400",
     },
     {
         key: "curatedMountains",
         label: "Mountains",
-        url: getLocalMediaSrc("curatedMountains", 1200) ?? "/optimized/curatedMountains-1200.avif",
-        thumbnail: getLocalMediaSrc("curatedMountains", 400) ?? "/optimized/curatedMountains-400.avif",
-        blurDataURL: getLocalBlurDataURL("curatedMountains"),
+        url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200",
+        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400",
     },
     {
         key: "curatedBeach",
-        label: "Beach",
-        url: getLocalMediaSrc("curatedBeach", 1200) ?? "/optimized/curatedBeach-1200.avif",
-        thumbnail: getLocalMediaSrc("curatedBeach", 400) ?? "/optimized/curatedBeach-400.avif",
-        blurDataURL: getLocalBlurDataURL("curatedBeach"),
+        label: "Resort",
+        url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200",
+        thumbnail: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=400",
+    },
+    {
+        key: "curatedParis",
+        label: "City",
+        url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=1200",
+        thumbnail: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=400",
     },
 ] as const;
 
@@ -70,9 +69,9 @@ function DashboardStatsSkeleton() {
     return (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-5 shadow-sm">
-                    <div className="mb-3 h-3 w-24 animate-pulse rounded-full bg-slate-100" />
-                    <div className="h-8 w-16 animate-pulse rounded-full bg-slate-200" />
+                <div key={idx} className="rounded-xl bg-white/50 p-5">
+                    <div className="mb-3 h-3 w-24 animate-pulse rounded-full bg-slate-200/60" />
+                    <div className="h-8 w-16 animate-pulse rounded-full bg-slate-200/80" />
                 </div>
             ))}
         </div>
@@ -83,14 +82,14 @@ function UpcomingPlanSkeleton() {
     return (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="flex h-full flex-col rounded-2xl border-2 border-dashed border-[#E5E7EB] bg-[#FFFFFF] p-2 shadow-sm">
-                    <div className="mb-3 h-48 animate-pulse rounded-xl bg-slate-200" />
+                <div key={idx} className="flex h-full flex-col rounded-2xl bg-white/50 p-2">
+                    <div className="mb-3 h-48 animate-pulse rounded-xl bg-slate-200/60" />
                     <div className="space-y-3 px-2 pb-2">
-                        <div className="h-5 w-2/3 animate-pulse rounded-full bg-slate-200" />
-                        <div className="h-3 w-1/3 animate-pulse rounded-full bg-slate-100" />
+                        <div className="h-5 w-2/3 animate-pulse rounded-full bg-slate-200/80" />
+                        <div className="h-3 w-1/3 animate-pulse rounded-full bg-slate-200/60" />
                         <div className="flex items-center justify-between pt-3">
-                            <div className="h-3 w-24 animate-pulse rounded-full bg-slate-100" />
-                            <div className="h-6 w-16 animate-pulse rounded-full bg-slate-100" />
+                            <div className="h-3 w-24 animate-pulse rounded-full bg-slate-200/60" />
+                            <div className="h-6 w-16 animate-pulse rounded-full bg-slate-200/60" />
                         </div>
                     </div>
                 </div>
@@ -110,7 +109,7 @@ export default function DashboardPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [newTripTitle, setNewTripTitle] = useState("");
     const [newTripDest, setNewTripDest] = useState("");
-    const [selectedCover, setSelectedCover] = useState(COVER_OPTIONS[0].url);
+    const [selectedCover, setSelectedCover] = useState<string>(COVER_OPTIONS[0].url);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -242,17 +241,12 @@ export default function DashboardPage() {
     const selectedCoverSrc = normalizeRemoteImage(selectedCover || FALLBACK_TRIP_COVER, 1200, 72);
 
     return (
-        <div className="grid min-h-[calc(100vh)] grid-cols-1 grid-rows-1 relative bg-[#FAFAFA] font-inter text-slate-900">
-            {/* STITCH PATTERN BG */}
-            <div className="fixed inset-0 pointer-events-none z-0" style={{
-                backgroundImage: "radial-gradient(#E4E4E7 1px, transparent 1px)",
-                backgroundSize: "24px 24px"
-            }} />
+        <div className="flex flex-col min-h-screen font-inter text-slate-900 pb-20">
 
             {/* Main Content Layer */}
             <div className="col-start-1 row-start-1 flex flex-col relative z-10 pb-32 w-full max-w-full">
                 {/* TOP HEADER (inside main area) */}
-                <header className="sticky top-0 flex items-center justify-between px-8 py-5 border-b border-[#E5E7EB] bg-[#FAFAFA]/90 backdrop-blur-md z-20 shrink-0">
+                <header className="sticky top-0 flex items-center justify-between px-8 py-5 border-b border-[#E5E7EB] bg-[#FAFAFA]/80 backdrop-blur-md z-20 shrink-0 h-[72px]">
                     <div className="flex items-center gap-2 text-sm text-[#6B7280]">
                         <span>Home</span>
                         <span>/</span>
@@ -268,10 +262,7 @@ export default function DashboardPage() {
                             </div>
                         )}
                         {/* Notification Bell */}
-                        <button className="w-8 h-8 rounded-full bg-[#FFFFFF] border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:text-[#1A1A1A] relative transition-colors shadow-sm">
-                            <Bell className="w-4 h-4 text-[#1A1A1A]" />
-                            <span className="absolute top-[5px] right-[5px] w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>
-                        </button>
+                        <NotificationBell isDemoUser={isDemoUser} />
                         <div className="flex items-center">
                             {mounted ? (
                                 <UserButton appearance={{ elements: { avatarBox: "h-8 w-8 border border-[#E5E7EB] cursor-pointer" } }} />
@@ -330,68 +321,7 @@ export default function DashboardPage() {
                                     </button>
                                 </div>
 
-                                {/* SECTION 2 — STATS ROW */}
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <div className="bg-[#FFFFFF] p-5 rounded-xl border border-[#E5E7EB] shadow-sm">
-                                        <p className="text-xs font-medium text-[#6B7280] mb-3">Active Trips</p>
-                                        <div className="flex items-end gap-3">
-                                            <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
-                                                {trips.length}
-                                            </span>
-                                            {isDemoUser && (
-                                                <div className="flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-100 px-1.5 py-0.5 rounded mb-1 border border-green-200">
-                                                    <ArrowUpRight className="w-2.5 h-2.5" /> 1
-                                                </div>
-                                            )}
-                                        </div>
-                                        {isDemoUser && <p className="text-[10px] text-[#6B7280] mt-1 relative top-0.5">compared to last month</p>}
-                                    </div>
 
-                                    <div className="bg-[#FFFFFF] p-5 rounded-xl border border-[#E5E7EB] shadow-sm">
-                                        <p className="text-xs font-medium text-[#6B7280] mb-3">Total Budget</p>
-                                        <div className="flex items-end gap-3">
-                                            <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
-                                                ${(trips.reduce((acc, t) => acc + (t.expenses?.reduce((sum, e) => sum + e.amount, 0) || 0), 0) / 1000).toFixed(1)}k
-                                            </span>
-                                            {isDemoUser && (
-                                                <div className="flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-100 px-1.5 py-0.5 rounded mb-1 border border-red-200">
-                                                    <ArrowDownRight className="w-2.5 h-2.5" /> 12%
-                                                </div>
-                                            )}
-                                        </div>
-                                        {isDemoUser && <p className="text-[10px] text-[#6B7280] mt-1 relative top-0.5">compared to last month</p>}
-                                    </div>
-
-                                    <div className="bg-[#FFFFFF] p-5 rounded-xl border border-[#E5E7EB] shadow-sm">
-                                        <p className="text-xs font-medium text-[#6B7280] mb-3">Members Collaborating</p>
-                                        <div className="flex items-end gap-3">
-                                            <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
-                                                {new Set(trips.flatMap(t => t.members.map(m => m.userId))).size}
-                                            </span>
-                                            {isDemoUser && (
-                                                <div className="flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-100 px-1.5 py-0.5 rounded mb-1 border border-green-200">
-                                                    <ArrowUpRight className="w-2.5 h-2.5" /> 3
-                                                </div>
-                                            )}
-                                        </div>
-                                        {isDemoUser && <p className="text-[10px] text-[#6B7280] mt-1 relative top-0.5">across all trips</p>}
-                                    </div>
-
-                                    <div className="bg-[#FFFFFF] p-5 rounded-xl border border-[#E5E7EB] shadow-sm">
-                                        <p className="text-xs font-medium text-[#6B7280] mb-3">Saved Activities</p>
-                                        <div className="flex items-end gap-3">
-                                            <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
-                                                {trips.reduce((acc, t) => acc + (t.checklist?.length || 0), 0)}
-                                            </span>
-                                            {isDemoUser && (
-                                                <div className="flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-100 px-1.5 py-0.5 rounded mb-1 border border-green-200">
-                                                    <ArrowUpRight className="w-2.5 h-2.5" /> 8
-                                                </div>
-                                            )}
-                                        </div>
-                                        {isDemoUser && <p className="text-[10px] text-[#6B7280] mt-1 relative top-0.5">in the last 30 days</p>}
-                                    </div>
-                                </div>
 
                                 {/* SECTION 3 — QUICK ACTIONS */}
                                 <div className="mb-12">
@@ -652,8 +582,7 @@ export default function DashboardPage() {
                             fill
                             sizes={CARD_IMAGE_SIZES}
                             className="object-cover transition-all duration-700"
-                            placeholder={selectedCoverOption?.blurDataURL ? "blur" : "empty"}
-                            blurDataURL={selectedCoverOption?.blurDataURL}
+                            placeholder="empty"
                         />
                         {/* Gradient overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -691,54 +620,68 @@ export default function DashboardPage() {
                         {/* Form fields */}
                         <div className="px-8 pt-6 pb-4 flex-1 overflow-y-auto space-y-5">
                             {/* Trip Name */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CA3AF]">Trip Name <span className="text-red-400">*</span></label>
-                                <Input
-                                    value={newTripTitle}
-                                    onChange={(e) => setNewTripTitle(e.target.value)}
-                                    placeholder="e.g. Summer Camp 2026"
-                                    className="rounded-xl border-[#E5E7EB] bg-[#FAFAFA] h-11 focus-visible:ring-[#0066FF]/30 focus-visible:border-[#0066FF] text-sm font-medium transition-all"
-                                />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CA3AF] ml-1">Adventure Name <span className="text-[#0066FF]">*</span></label>
+                                <div className="relative group/input">
+                                    <Input
+                                        value={newTripTitle}
+                                        onChange={(e) => setNewTripTitle(e.target.value)}
+                                        placeholder="e.g. Bali Summer 2026"
+                                        className="rounded-2xl border-[#E5E7EB] bg-white h-12 pl-11 focus-visible:ring-[#0066FF]/20 focus-visible:border-[#0066FF] text-sm font-semibold transition-all shadow-sm"
+                                    />
+                                    <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0066FF] opacity-60 transition-opacity group-focus-within/input:opacity-100" />
+                                </div>
                             </div>
 
                             {/* Destination */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CA3AF]">Destination</label>
-                                <Input
-                                    value={newTripDest}
-                                    onChange={(e) => setNewTripDest(e.target.value)}
-                                    placeholder="e.g. Kyoto, Japan"
-                                    className="rounded-xl border-[#E5E7EB] bg-[#FAFAFA] h-11 focus-visible:ring-[#0066FF]/30 focus-visible:border-[#0066FF] text-sm font-medium transition-all"
-                                />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CA3AF] ml-1">Destination</label>
+                                <div className="relative group/input">
+                                    <Input
+                                        value={newTripDest}
+                                        onChange={(e) => setNewTripDest(e.target.value)}
+                                        placeholder="e.g. Kyoto, Japan"
+                                        className="rounded-2xl border-[#E5E7EB] bg-white h-12 pl-11 focus-visible:ring-[#0066FF]/20 focus-visible:border-[#0066FF] text-sm font-semibold transition-all shadow-sm"
+                                    />
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280] transition-colors group-focus-within/input:text-[#0066FF]" />
+                                </div>
                             </div>
 
                             {/* Dates */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CA3AF]">Departure <span className="text-red-400">*</span></label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CA3AF] ml-1">Departure <span className="text-[#0066FF]">*</span></label>
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-medium rounded-xl border-[#E5E7EB] bg-[#FAFAFA] h-11 hover:bg-slate-50 text-sm transition-all", !startDate && "text-[#9CA3AF]")}>
-                                                <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
-                                                {startDate ? format(startDate, "MMM d, yyyy") : <span>Select date</span>}
+                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-semibold rounded-2xl border-[#E5E7EB] bg-white h-12 hover:bg-slate-50 text-sm transition-all shadow-sm px-4", !startDate && "text-[#9CA3AF]")}>
+                                                <CalendarIcon className="mr-3 h-4 w-4 text-[#6B7280] shrink-0" />
+                                                {startDate ? format(startDate, "MMM d, yyyy") : <span>Start date</span>}
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border-[#E5E7EB]" align="start">
-                                            <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                                        <PopoverContent className="w-auto p-0 rounded-3xl shadow-2xl border-[#E5E7EB] bg-white overflow-hidden" align="start" sideOffset={8}>
+                                            <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6B7280]">Select Start</span>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#0066FF]" />
+                                            </div>
+                                            <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus className="p-3" />
                                         </PopoverContent>
                                     </Popover>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CA3AF]">Return <span className="text-red-400">*</span></label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CA3AF] ml-1">Return <span className="text-[#0066FF]">*</span></label>
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-medium rounded-xl border-[#E5E7EB] bg-[#FAFAFA] h-11 hover:bg-slate-50 text-sm transition-all", !endDate && "text-[#9CA3AF]")}>
-                                                <CalendarIcon className="mr-2 h-4 w-4 text-[#9CA3AF] shrink-0" />
-                                                {endDate ? format(endDate, "MMM d, yyyy") : <span>Select date</span>}
+                                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-semibold rounded-2xl border-[#E5E7EB] bg-white h-12 hover:bg-slate-50 text-sm transition-all shadow-sm px-4", !endDate && "text-[#9CA3AF]")}>
+                                                <CalendarIcon className="mr-3 h-4 w-4 text-[#6B7280] shrink-0" />
+                                                {endDate ? format(endDate, "MMM d, yyyy") : <span>End date</span>}
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border-[#E5E7EB]" align="start">
-                                            <Calendar mode="single" selected={endDate} onSelect={setEndDate} disabled={(d) => startDate ? d < startDate : false} initialFocus />
+                                        <PopoverContent className="w-auto p-0 rounded-3xl shadow-2xl border-[#E5E7EB] bg-white overflow-hidden" align="end" sideOffset={8}>
+                                            <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6B7280]">Select Return</span>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#0066FF]" />
+                                            </div>
+                                            <Calendar mode="single" selected={endDate} onSelect={setEndDate} disabled={(d) => startDate ? d < startDate : false} initialFocus className="p-3" />
                                         </PopoverContent>
                                     </Popover>
                                 </div>

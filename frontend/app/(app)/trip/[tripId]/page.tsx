@@ -18,6 +18,7 @@ import {
     Trash2,
     MapPin,
     MessageSquare,
+    Bell,
     FileText,
     CheckCircle2,
     Wallet,
@@ -53,7 +54,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { THUMBNAIL_IMAGE_SIZES, normalizeRemoteImage } from "@shared/media";
 import { cn } from "@shared/utils";
 import { AvatarGroup } from "@frontend/ui/ui/avatar-group";
-import { useUser } from "@clerk/nextjs";
+import { NotificationBell } from "@frontend/ui/notification-bell";
+import { useUser, UserButton } from "@clerk/nextjs";
 import {
     DndContext,
     closestCenter,
@@ -207,54 +209,61 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
 
 function TripDetailLoadingSkeleton() {
     return (
-        <div className="min-h-screen bg-slate-100/60 pb-20 font-inter text-slate-900">
-            <div className="mx-auto max-w-[1400px] px-4 pt-6 sm:px-6 lg:px-8">
-                <div className="relative h-[280px] w-full overflow-hidden rounded-[2rem] bg-slate-200 shadow-lg sm:h-[320px]">
-                    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-200 via-slate-300 to-slate-200" />
-                    <div className="absolute bottom-6 left-6 right-6 space-y-4">
-                        <div className="h-8 w-56 animate-pulse rounded-full bg-white/30" />
-                        <div className="h-12 w-80 max-w-full animate-pulse rounded-full bg-white/40" />
+        <div className="min-h-screen flex flex-col bg-[#FAFAFA] font-inter pb-20 relative overflow-hidden">
+            {/* DOT PATTERN BACKGROUND */}
+            <div className="fixed inset-0 pointer-events-none z-0" style={{
+                backgroundImage: "radial-gradient(#E4E4E7 1px, transparent 1px)",
+                backgroundSize: "24px 24px"
+            }} />
+
+            {/* Nav Skeleton */}
+            <div className="flex items-center justify-between px-8 py-5 border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
+                <div className="h-4 w-32 animate-pulse rounded-full bg-slate-200/60" />
+                <div className="flex items-center gap-4">
+                    <div className="h-9 w-9 animate-pulse rounded-full bg-slate-200/60" />
+                    <div className="h-9 w-9 animate-pulse rounded-full bg-slate-200/60" />
+                </div>
+            </div>
+
+            {/* Banner Skeleton */}
+            <div className="relative h-48 sm:h-[260px] w-full z-10 shrink-0 bg-slate-200">
+                <div className="absolute inset-0 animate-pulse bg-slate-300" />
+                <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
+                    <div className="space-y-4 w-full">
+                        <div className="h-6 w-48 animate-pulse rounded-full bg-black/10" />
+                        <div className="h-10 w-72 max-w-full animate-pulse rounded-full bg-black/10" />
                     </div>
                 </div>
             </div>
-            <div className="mx-auto mt-6 max-w-[1400px] px-4 sm:px-6 lg:px-8">
-                <div className="mb-8 flex justify-center">
-                    <div className="h-14 w-[480px] max-w-full animate-pulse rounded-2xl bg-white shadow-sm" />
+
+            {/* Tabs Skeleton */}
+            <div className="w-full flex-1 flex flex-col mt-0">
+                <div className="bg-white border-b border-[#E5E7EB] z-20 px-8 w-full">
+                    <div className="max-w-[1400px] mx-auto w-full">
+                        <div className="flex gap-8 py-4">
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                                <div key={idx} className="h-5 w-16 animate-pulse rounded-full bg-slate-200/60" />
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                        <div className="lg:col-span-2">
-                            <div className="flex gap-6 overflow-hidden">
-                                {Array.from({ length: 3 }).map((_, idx) => (
-                                    <div key={idx} className="w-[340px] shrink-0 rounded-[1.25rem] border border-slate-200 bg-white p-5 shadow-sm">
-                                        <div className="mb-6 h-7 w-28 animate-pulse rounded-full bg-slate-200" />
-                                        <div className="space-y-4">
-                                            {Array.from({ length: 3 }).map((__, cardIdx) => (
-                                                <div key={cardIdx} className="rounded-xl border border-slate-200 p-4">
-                                                    <div className="mb-3 h-4 w-16 animate-pulse rounded-full bg-slate-100" />
-                                                    <div className="mb-2 h-5 w-2/3 animate-pulse rounded-full bg-slate-200" />
-                                                    <div className="h-4 w-1/2 animate-pulse rounded-full bg-slate-100" />
-                                                </div>
-                                            ))}
+
+                <div className="max-w-[1400px] mx-auto px-4 w-full sm:px-8 py-8 space-y-8 flex-1">
+                    <div className="flex gap-6 overflow-hidden">
+                        {Array.from({ length: 3 }).map((_, idx) => (
+                            <div key={idx} className="w-[340px] shrink-0 rounded-[1.25rem] bg-white p-5 shadow-sm border border-slate-100">
+                                <div className="mb-6 h-7 w-28 animate-pulse rounded-full bg-slate-200/60" />
+                                <div className="space-y-4">
+                                    {Array.from({ length: 3 }).map((__, cardIdx) => (
+                                        <div key={cardIdx} className="rounded-xl bg-slate-50/50 p-4 border border-slate-100">
+                                            <div className="mb-3 h-4 w-16 animate-pulse rounded-full bg-slate-200/60" />
+                                            <div className="mb-2 h-5 w-2/3 animate-pulse rounded-full bg-slate-200/80" />
+                                            <div className="h-4 w-1/2 animate-pulse rounded-full bg-slate-200/60" />
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <div className="mb-6 h-6 w-32 animate-pulse rounded-full bg-slate-200" />
-                            <div className="space-y-4">
-                                {Array.from({ length: 5 }).map((_, idx) => (
-                                    <div key={idx} className="flex items-start gap-4">
-                                        <div className="h-8 w-8 animate-pulse rounded-full bg-slate-100" />
-                                        <div className="flex-1 space-y-2">
-                                            <div className="h-3 w-20 animate-pulse rounded-full bg-slate-100" />
-                                            <div className="h-4 w-40 animate-pulse rounded-full bg-slate-200" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -265,6 +274,7 @@ function TripDetailLoadingSkeleton() {
 export default function TripDetailPage({ params }: { params: Promise<{ tripId: string }> }) {
     const { tripId } = use(params);
     const { user } = useUser();
+    const isDemoUser = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
     const [, setActiveTab] = useState("itinerary");
     const [loading, setLoading] = useState(true);
     const [, setSaving] = useState(false);
@@ -550,13 +560,16 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     // ────────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#FAFAFA] font-inter pb-20">
+        <div className="min-h-screen flex flex-col font-inter pb-20">
+
             {/* TOP NAVIGATION BAR */}
-            <header className="flex items-center justify-between px-8 py-5 border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
-                <div className="flex items-center gap-2 text-[14px]">
-                    <Link href="/dashboard" className="text-[#6B7280] font-medium hover:text-slate-900 transition-colors">Trips</Link>
-                    <span className="text-[#E5E7EB]">/</span>
-                    <span className="text-slate-900 font-semibold">{trip.title}</span>
+            <header className="flex h-[72px] items-center justify-between px-8 border-b border-[#E5E7EB] bg-[#FAFAFA]/80 backdrop-blur-md sticky top-0 z-30">
+                <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+                    <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Home</Link>
+                    <span>/</span>
+                    <Link href="/trips" className="hover:text-slate-900 transition-colors">Trips</Link>
+                    <span>/</span>
+                    <span className="text-[#1A1A1A] font-medium">{trip.title}</span>
                 </div>
                 <div className="flex items-center gap-4">
                     <button
@@ -566,20 +579,12 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                     >
                         {isCoverHidden ? <Eye className="w-[18px] h-[18px]" /> : <EyeOff className="w-[18px] h-[18px]" />}
                     </button>
-                    <button className="relative w-9 h-9 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] hover:text-slate-900 transition-colors shadow-sm">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                        </svg>
-                        <span className="absolute top-[8px] right-[10px] w-1.5 h-1.5 bg-red-500 rounded-full border-[1px] border-white"></span>
-                    </button>
-                    {user?.imageUrl ? (
-                        <Image src={user.imageUrl} alt="User Avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover border border-[#E5E7EB] shadow-sm cursor-pointer" />
-                    ) : (
-                        <div className="w-9 h-9 rounded-full bg-slate-200 border border-[#E5E7EB] flex items-center justify-center overflow-hidden">
-                            <svg className="w-5 h-5 text-slate-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
-                        </div>
-                    )}
+
+                    <NotificationBell isDemoUser={isDemoUser} />
+
+                    <div className="flex items-center border-l border-[#E5E7EB] pl-4 h-6">
+                        <UserButton appearance={{ elements: { avatarBox: "h-8 w-8 ring-1 ring-slate-200 shadow-sm" } }} />
+                    </div>
                 </div>
             </header>
 
@@ -609,35 +614,72 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                     <Settings className="h-[15px] w-[15px]" />
                                 </button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border-0 rounded-[1.5rem] shadow-2xl bg-white">
-                                <div className="p-8">
-                                    <DialogHeader className="mb-8">
-                                        <DialogTitle className="text-2xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Quicksand', sans-serif" }}>Trip Settings</DialogTitle>
-                                        <DialogDescription className="text-slate-500 font-medium">Manage your trip details and preferences.</DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-6">
-                                        <div className="space-y-3">
-                                            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Trip Details</h4>
-                                            <div className="space-y-1">
-                                                <Button variant="ghost" className="w-full justify-start text-slate-700 hover:bg-slate-50 rounded-xl h-12 px-3 font-bold transition-colors shadow-none border-0" onClick={() => { setIsSettingsOpen(false); setIsEditingTitle(true); }}>
-                                                    <Edit2 className="h-4 w-4 mr-3 text-slate-400" />
-                                                    Rename Trip
-                                                </Button>
+                            <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border border-[#E5E7EB] rounded-[1.5rem] shadow-2xl bg-[#FAFAFA]" aria-describedby="dialog-description">
+                                <div className="flex flex-col bg-white border-b border-[#E5E7EB] px-8 py-6">
+                                    <DialogTitle className="text-2xl font-bold tracking-tight text-[#1A1A1A]" style={{ fontFamily: "'Quicksand', sans-serif" }}>Trip Settings</DialogTitle>
+                                    <DialogDescription id="dialog-description" className="text-[#6B7280] text-sm mt-1">Manage your trip preferences and configuration.</DialogDescription>
+                                </div>
+
+                                <div className="p-8 space-y-6">
+                                    {/* Display Preferences Card */}
+                                    <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm p-6">
+                                        <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">Display Preferences</h2>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium text-[#1A1A1A]">Hide Cover Image</p>
+                                                <p className="text-xs text-[#6B7280] mt-0.5">Show a minimal header without the cover photo.</p>
                                             </div>
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={isCoverHidden}
+                                                onClick={() => setIsCoverHidden(!isCoverHidden)}
+                                                className={`relative inline-flex h-5 w-[38px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isCoverHidden ? 'bg-[#0066FF]' : 'bg-[#E5E7EB]'}`}
+                                            >
+                                                <span
+                                                    aria-hidden="true"
+                                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isCoverHidden ? 'translate-x-4' : 'translate-x-0'}`}
+                                                />
+                                            </button>
                                         </div>
-                                        <div className="space-y-3">
-                                            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Danger Zone</h4>
-                                            <div className="p-1">
-                                                <Button variant="ghost" className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl h-12 px-3 font-bold transition-colors shadow-none border-0 group" onClick={handleDeleteTrip} disabled={deleting}>
-                                                    <Trash2 className="h-4 w-4 mr-3 text-red-400 group-hover:text-red-600" />
-                                                    {deleting ? "Deleting Trip..." : "Delete Trip Permanently"}
-                                                </Button>
+                                    </div>
+
+                                    {/* Trip Data Card */}
+                                    <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm p-6">
+                                        <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">Trip Data</h2>
+                                        <div className="flex items-center justify-between pb-5 border-b border-[#E5E7EB]">
+                                            <div>
+                                                <p className="text-sm font-medium text-[#1A1A1A]">Rename Trip</p>
+                                                <p className="text-xs text-[#6B7280] mt-0.5">Change the display name of this trip.</p>
                                             </div>
+                                            <Button
+                                                variant="outline"
+                                                className="text-sm px-4 py-1.5 h-auto text-[#1A1A1A] rounded-lg font-medium border-[#E5E7EB] hover:bg-slate-50 transition-colors shadow-sm"
+                                                onClick={() => { setIsSettingsOpen(false); setIsEditingTitle(true); }}
+                                            >
+                                                Rename
+                                            </Button>
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-5">
+                                            <div>
+                                                <p className="text-sm font-medium text-[#e11d48]">Delete Trip</p>
+                                                <p className="text-xs text-[#f43f5e] mt-0.5">Permanently remove this trip and all data.</p>
+                                            </div>
+                                            <Button
+                                                variant="destructive"
+                                                className="text-sm px-4 py-1.5 h-auto bg-[#fff1f2] text-[#e11d48] hover:bg-[#ffe4e6] hover:text-[#be123c] shadow-none border border-[#ffe4e6] rounded-lg font-medium transition-colors"
+                                                onClick={handleDeleteTrip}
+                                                disabled={deleting}
+                                            >
+                                                {deleting ? "Deleting..." : "Delete Permanently"}
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-slate-50 p-6 flex justify-end border-t border-slate-100">
-                                    <Button onClick={() => setIsSettingsOpen(false)} className="rounded-xl font-semibold bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 px-6">Close</Button>
+
+                                <div className="bg-white border-t border-[#E5E7EB] p-5 flex justify-end rounded-b-[1.5rem]">
+                                    <Button onClick={() => setIsSettingsOpen(false)} className="bg-[#0066FF] hover:bg-[#0066FF]/90 text-white rounded-lg px-6 py-2 h-auto font-medium shadow-sm transition-colors">Done</Button>
                                 </div>
                             </DialogContent>
                         </Dialog>
@@ -679,24 +721,26 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                     </div>
 
                     <div className="flex items-center hidden sm:flex gap-4">
-                        <div className="flex -space-x-3 items-center">
+                        <div className="flex -space-x-2 items-center">
                             {(trip.members || []).slice(0, 4).map((m: TripMember, idx, arr) => (
                                 <div
                                     key={m.userId}
-                                    className="group relative shrink-0 rounded-full border-[2px] border-white bg-white shadow-sm transition-transform duration-300 hover:-translate-y-[6px] hover:z-50 cursor-pointer"
+                                    className="group/avatar relative shrink-0 rounded-full border-[2px] border-white bg-white shadow-sm transition-transform duration-300 hover:-translate-y-[6px] hover:z-50 cursor-pointer"
                                     style={{ zIndex: arr.length - idx }}
                                 >
                                     <Image
                                         alt={m.name}
-                                        width={44}
-                                        height={44}
-                                        className="w-[44px] h-[44px] rounded-full object-cover"
+                                        width={32}
+                                        height={32}
+                                        className="w-[32px] h-[32px] rounded-full object-cover"
                                         src={idx === 0 && user ? user.imageUrl : (m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}`)}
                                     />
                                     {/* Tooltip */}
                                     <div
-                                        className="pointer-events-none absolute left-1/2 z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-xl transition-all duration-200 group-hover:-translate-y-1 group-hover:opacity-100"
-                                        style={{ top: -38, transform: "translateX(-50%)" }}
+                                        className="pointer-events-none absolute left-1/2 z-[100] whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white opacity-0 shadow-xl transition-all duration-200 group-hover/avatar:-translate-y-2 group-hover/avatar:opacity-100"
+                                        style={{
+                                            top: '-36px', transform: "translateX(-50%)"
+                                        }}
                                     >
                                         {m.name}
                                         <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-slate-900" />

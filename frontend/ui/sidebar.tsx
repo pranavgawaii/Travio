@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { THUMBNAIL_IMAGE_SIZES, normalizeRemoteImage } from "@shared/media";
 import { cn } from "@shared/utils";
+import { useUser } from "@clerk/nextjs";
 
 interface TripStub {
     _id: string;
@@ -26,7 +27,7 @@ const NAV_ITEMS = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/trips", label: "Trips", icon: Map },
     { href: "/activity", label: "Activity", icon: Bell, badge: "12" },
-    { href: "/chat", label: "Chat", icon: MessageSquare, disabled: true },
+    { href: "/chat", label: "Chat", icon: MessageSquare, soon: true },
     { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -35,6 +36,8 @@ export function Sidebar() {
     const [collapsed, setCollapsed] = useState(false);
     const [recentTrips, setRecentTrips] = useState<TripStub[]>([]);
     const [loadingTrips, setLoadingTrips] = useState(true);
+    const { user } = useUser();
+    const isDemoUser = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
 
     useEffect(() => {
         let isMounted = true;
@@ -108,27 +111,28 @@ export function Sidebar() {
                         <p className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider mb-3 px-2">Navigation</p>
                     )}
                     <nav className="space-y-1">
-                        {NAV_ITEMS.map(({ href, label, icon: Icon, disabled, badge }) => {
+                        {NAV_ITEMS.map((item) => {
+                            const { href, label, icon: Icon, soon, badge } = item as any;
                             const isActive = pathname === href || (href === "/dashboard" && pathname === "/");
 
                             const content = (
                                 <>
                                     <div className="flex items-center gap-3">
-                                        <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-[#0066FF]" : "text-[#6B7280]", disabled && "opacity-40")} />
+                                        <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-[#0066FF]" : "text-[#6B7280]")} />
                                         {!collapsed && (
-                                            <span className={cn(disabled && "opacity-60", "text-sm", isActive && "text-[#1A1A1A]")}>
+                                            <span className={cn("text-sm", isActive && "text-[#1A1A1A]")}>
                                                 {label}
                                             </span>
                                         )}
                                     </div>
                                     {!collapsed && (
                                         <div className="flex items-center justify-end flex-1 ml-2">
-                                            {badge && (
-                                                <span className="bg-[#E5E7EB] text-[#1A1A1A] text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                            {badge && isDemoUser && (
+                                                <span className="bg-[#0066FF] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                                     {badge}
                                                 </span>
                                             )}
-                                            {disabled && (
+                                            {soon && (
                                                 <span className="text-[10px] bg-[#0066FF]/10 text-[#0066FF] px-1.5 py-0.5 rounded shrink-0">
                                                     Soon
                                                 </span>
@@ -144,10 +148,10 @@ export function Sidebar() {
                                     ? "bg-[#FFFFFF] text-[#1A1A1A] shadow-sm border border-[#E5E7EB]"
                                     : "text-[#6B7280] hover:bg-black/5 hover:text-[#1A1A1A] border border-transparent",
                                 collapsed && "justify-center",
-                                disabled && "cursor-not-allowed text-[#6B7280] opacity-70"
+                                soon && "text-[#6B7280]"
                             );
 
-                            if (disabled) {
+                            if (soon && false) { // Logic to block click if desired, but currently open
                                 return (
                                     <div key={href} className={className} title={collapsed ? label : undefined}>
                                         {content}

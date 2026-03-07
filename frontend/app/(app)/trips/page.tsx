@@ -5,11 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, MapPin, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, MapPin, Plus, ArrowUpRight, ArrowDownRight, Bell } from "lucide-react";
 
 import { AvatarGroup } from "@frontend/ui/ui/avatar-group";
 import { Badge } from "@frontend/ui/ui/badge";
 import { Button } from "@frontend/ui/ui/button";
+import { NotificationBell } from "@frontend/ui/notification-bell";
 import { QuickTooltipActions } from "@frontend/ui/ui/quick-tooltip-actions";
 import { CARD_IMAGE_SIZES, getLocalMediaSrc, normalizeRemoteImage } from "@shared/media";
 import { cn } from "@shared/utils";
@@ -30,6 +31,7 @@ interface TripData {
     coverImage: string;
     members: TripMember[];
     expenses?: Array<{ amount: number }>;
+    checklist?: Array<{ _id?: string }>;
     ownerId: string;
     inviteCode: string;
     isDemo?: boolean;
@@ -37,23 +39,23 @@ interface TripData {
 
 function TripCardSkeleton() {
     return (
-        <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-            <div className="h-44 animate-pulse bg-slate-200" />
+        <div className="overflow-hidden rounded-[1.5rem] bg-white/50">
+            <div className="h-44 animate-pulse bg-slate-200/60" />
             <div className="space-y-5 p-5">
                 <div className="space-y-2">
-                    <div className="h-6 w-2/3 animate-pulse rounded-full bg-slate-200" />
-                    <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-100" />
+                    <div className="h-6 w-2/3 animate-pulse rounded-full bg-slate-200/80" />
+                    <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-200/60" />
                 </div>
                 <div className="flex items-center justify-between">
-                    <div className="h-8 w-24 animate-pulse rounded-full bg-slate-100" />
-                    <div className="h-6 w-16 animate-pulse rounded-full bg-slate-100" />
+                    <div className="h-8 w-24 animate-pulse rounded-full bg-slate-200/60" />
+                    <div className="h-6 w-16 animate-pulse rounded-full bg-slate-200/60" />
                 </div>
-                <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                <div className="flex items-center justify-between border-t border-slate-200/50 pt-4">
                     <div className="space-y-2">
-                        <div className="h-3 w-16 animate-pulse rounded-full bg-slate-100" />
-                        <div className="h-4 w-24 animate-pulse rounded-full bg-slate-200" />
+                        <div className="h-3 w-16 animate-pulse rounded-full bg-slate-200/60" />
+                        <div className="h-4 w-24 animate-pulse rounded-full bg-slate-200/80" />
                     </div>
-                    <div className="h-8 w-8 animate-pulse rounded-full bg-slate-100" />
+                    <div className="h-8 w-8 animate-pulse rounded-full bg-slate-200/60" />
                 </div>
             </div>
         </div>
@@ -64,6 +66,11 @@ export default function TripsPage() {
     const { user, isLoaded } = useUser();
     const [trips, setTrips] = useState<TripData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const fallbackCover = useMemo(
         () => getLocalMediaSrc("curatedRoadTrip", 1200) ?? "/optimized/curatedRoadTrip-1200.avif",
@@ -86,33 +93,93 @@ export default function TripsPage() {
         fetchTrips();
     }, [fetchTrips, isLoaded]);
 
+    const isDemoUser = mounted && user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
+
     return (
-        <div className="min-h-screen bg-[#f8fafc] pb-20 font-inter text-slate-900">
-            <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 px-6 backdrop-blur-md lg:px-8">
-                <div className="flex items-center gap-3">
-                    <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 leading-none">Management</p>
-                        <h1 className="mt-0.5 text-[17px] font-semibold leading-none tracking-tight text-slate-900">All Trips</h1>
-                    </div>
+        <div className="min-h-screen pb-20 font-inter text-slate-900">
+
+            <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between border-b border-[#E5E7EB] bg-[#FAFAFA]/80 px-8 backdrop-blur-md">
+                <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+                    <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Home</Link>
+                    <span>/</span>
+                    <span className="text-[#1A1A1A] font-medium">Trips</span>
                     <Badge variant="secondary" className="ml-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500 shadow-sm">
                         {loading ? "..." : trips.length}
                     </Badge>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Link href="/dashboard">
-                        <Button className="h-9 rounded-xl bg-[#2563eb] px-4 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-700">
-                            <Plus className="mr-1.5 h-3.5 w-3.5" />
-                            Create Trip
-                        </Button>
-                    </Link>
-                    <div className="ml-1 flex h-6 items-center border-l border-slate-200 pl-2">
+                    <NotificationBell isDemoUser={isDemoUser} />
+                    <div className="ml-1 flex h-6 items-center border-l border-slate-200 pl-4">
                         <UserButton appearance={{ elements: { avatarBox: "h-8 w-8 ring-1 ring-slate-200 shadow-sm" } }} />
                     </div>
                 </div>
             </header>
 
-            <main className="px-6 pb-20 pt-8 lg:px-8">
+            <main className="relative z-10 px-6 pb-20 pt-8 lg:px-8">
+                {/* SECTION 2 — STATS ROW (Moved from Dashboard) */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-[#FFFFFF] p-5 rounded-xl border border-[#E5E7EB] shadow-sm">
+                        <p className="text-xs font-medium text-[#6B7280] mb-3">Active Trips</p>
+                        <div className="flex items-end gap-3">
+                            <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
+                                {trips.length}
+                            </span>
+                            {isDemoUser && (
+                                <div className="flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-100 px-1.5 py-0.5 rounded mb-1 border border-green-200">
+                                    <ArrowUpRight className="w-2.5 h-2.5" /> 1
+                                </div>
+                            )}
+                        </div>
+                        {isDemoUser && <p className="text-[10px] text-[#6B7280] mt-1 relative top-0.5">compared to last month</p>}
+                    </div>
+
+                    <div className="bg-[#FFFFFF] p-5 rounded-xl border border-[#E5E7EB] shadow-sm">
+                        <p className="text-xs font-medium text-[#6B7280] mb-3">Total Budget</p>
+                        <div className="flex items-end gap-3">
+                            <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
+                                ${(trips.reduce((acc, t) => acc + (t.expenses?.reduce((sum, e) => sum + e.amount, 0) || 0), 0) / 1000).toFixed(1)}k
+                            </span>
+                            {isDemoUser && (
+                                <div className="flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-100 px-1.5 py-0.5 rounded mb-1 border border-red-200">
+                                    <ArrowDownRight className="w-2.5 h-2.5" /> 12%
+                                </div>
+                            )}
+                        </div>
+                        {isDemoUser && <p className="text-[10px] text-[#6B7280] mt-1 relative top-0.5">compared to last month</p>}
+                    </div>
+
+                    <div className="bg-[#FFFFFF] p-5 rounded-xl border border-[#E5E7EB] shadow-sm">
+                        <p className="text-xs font-medium text-[#6B7280] mb-3">Members Collaborating</p>
+                        <div className="flex items-end gap-3">
+                            <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
+                                {new Set(trips.flatMap(t => t.members.map(m => m.userId))).size}
+                            </span>
+                            {isDemoUser && (
+                                <div className="flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-100 px-1.5 py-0.5 rounded mb-1 border border-green-200">
+                                    <ArrowUpRight className="w-2.5 h-2.5" /> 3
+                                </div>
+                            )}
+                        </div>
+                        {isDemoUser && <p className="text-[10px] text-[#6B7280] mt-1 relative top-0.5">across all trips</p>}
+                    </div>
+
+                    <div className="bg-[#FFFFFF] p-5 rounded-xl border border-[#E5E7EB] shadow-sm">
+                        <p className="text-xs font-medium text-[#6B7280] mb-3">Saved Activities</p>
+                        <div className="flex items-end gap-3">
+                            <span className="text-2xl font-bold text-[#1A1A1A] leading-none">
+                                {trips.reduce((acc, t) => acc + (t.checklist?.length || 0), 0)}
+                            </span>
+                            {isDemoUser && (
+                                <div className="flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-100 px-1.5 py-0.5 rounded mb-1 border border-green-200">
+                                    <ArrowUpRight className="w-2.5 h-2.5" /> 8
+                                </div>
+                            )}
+                        </div>
+                        {isDemoUser && <p className="text-[10px] text-[#6B7280] mt-1 relative top-0.5">in the last 30 days</p>}
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                         {Array.from({ length: 6 }).map((_, idx) => (

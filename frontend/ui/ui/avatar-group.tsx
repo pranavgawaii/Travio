@@ -36,7 +36,7 @@ const AvatarGroup = ({
                     return (
                         <div
                             key={`${avatar.src}-${idx}`}
-                            className="group relative shrink-0 rounded-full border-2 border-white bg-white shadow-sm transition-transform duration-300"
+                            className="group/avatar relative shrink-0 rounded-full border-2 border-white bg-white shadow-sm transition-transform duration-300 hover:z-[100]"
                             style={{
                                 width: size,
                                 height: size,
@@ -59,9 +59,9 @@ const AvatarGroup = ({
                             </div>
                             {avatar.label && (
                                 <div
-                                    className="pointer-events-none absolute left-1/2 z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:opacity-100"
+                                    className="pointer-events-none absolute left-1/2 z-[110] whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white opacity-0 shadow-lg transition-all duration-200 group-hover/avatar:-translate-y-2 group-hover/avatar:opacity-100"
                                     style={{
-                                        top: -size * 0.8,
+                                        top: -30,
                                         transform: "translateX(-50%)",
                                     }}
                                 >

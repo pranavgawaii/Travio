@@ -69,9 +69,9 @@ function DashboardStatsSkeleton() {
     return (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="rounded-xl bg-white/50 p-5">
-                    <div className="mb-3 h-3 w-24 animate-pulse rounded-full bg-slate-200/60" />
-                    <div className="h-8 w-16 animate-pulse rounded-full bg-slate-200/80" />
+                <div key={idx} className="rounded-xl bg-white p-5 border border-[#E5E7EB] shadow-sm">
+                    <div className="mb-3 h-3 w-24 shimmer rounded-full" />
+                    <div className="h-8 w-16 shimmer rounded-full" />
                 </div>
             ))}
         </div>
@@ -82,14 +82,14 @@ function UpcomingPlanSkeleton() {
     return (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="flex h-full flex-col rounded-2xl bg-white/50 p-2">
-                    <div className="mb-3 h-48 animate-pulse rounded-xl bg-slate-200/60" />
+                <div key={idx} className="flex h-full flex-col rounded-2xl bg-white p-2 border-2 border-dashed border-[#E5E7EB]">
+                    <div className="mb-3 h-48 shimmer rounded-xl" />
                     <div className="space-y-3 px-2 pb-2">
-                        <div className="h-5 w-2/3 animate-pulse rounded-full bg-slate-200/80" />
-                        <div className="h-3 w-1/3 animate-pulse rounded-full bg-slate-200/60" />
+                        <div className="h-5 w-2/3 shimmer rounded-full" />
+                        <div className="h-3 w-1/3 shimmer rounded-full" />
                         <div className="flex items-center justify-between pt-3">
-                            <div className="h-3 w-24 animate-pulse rounded-full bg-slate-200/60" />
-                            <div className="h-6 w-16 animate-pulse rounded-full bg-slate-200/60" />
+                            <div className="h-3 w-24 shimmer rounded-full" />
+                            <div className="h-6 w-16 shimmer rounded-full" />
                         </div>
                     </div>
                 </div>
@@ -280,26 +280,26 @@ export default function DashboardPage() {
                             <>
                                 <div className="flex items-end justify-between">
                                     <div className="space-y-2">
-                                        <div className="h-9 w-56 animate-pulse rounded-full bg-slate-200" />
-                                        <div className="h-4 w-80 animate-pulse rounded-full bg-slate-100" />
+                                        <div className="h-9 w-56 shimmer rounded-full" />
+                                        <div className="h-4 w-80 shimmer rounded-full" />
                                     </div>
-                                    <div className="h-11 w-32 animate-pulse rounded-xl bg-blue-100" />
+                                    <div className="h-11 w-32 shimmer rounded-xl" />
                                 </div>
                                 <DashboardStatsSkeleton />
                                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                                     <div className="lg:col-span-2">
-                                        <div className="mb-5 h-5 w-32 animate-pulse rounded-full bg-slate-200" />
+                                        <div className="mb-5 h-5 w-32 shimmer rounded-full" />
                                         <UpcomingPlanSkeleton />
                                     </div>
                                     <div>
-                                        <div className="mb-5 h-5 w-28 animate-pulse rounded-full bg-slate-200" />
+                                        <div className="mb-5 h-5 w-28 shimmer rounded-full" />
                                         <div className="space-y-4 rounded-2xl border border-[#E5E7EB] bg-[#FFFFFF] p-6 shadow-sm">
                                             {Array.from({ length: 4 }).map((_, idx) => (
                                                 <div key={idx} className="flex items-start gap-4">
-                                                    <div className="h-8 w-8 animate-pulse rounded-full bg-slate-100" />
+                                                    <div className="h-8 w-8 shimmer rounded-full" />
                                                     <div className="flex-1 space-y-2 pt-1">
-                                                        <div className="h-3 w-20 animate-pulse rounded-full bg-slate-100" />
-                                                        <div className="h-4 w-40 animate-pulse rounded-full bg-slate-200" />
+                                                        <div className="h-3 w-20 shimmer rounded-full" />
+                                                        <div className="h-4 w-40 shimmer rounded-full" />
                                                     </div>
                                                 </div>
                                             ))}
@@ -308,8 +308,7 @@ export default function DashboardPage() {
                                 </div>
                             </>
                         ) : (
-
-                            <>
+                            <div className="animate-fade-in space-y-10">
                                 <div className="flex items-end justify-between mb-8">
                                     <div>
                                         <h1 className="text-3xl font-bold text-[#1A1A1A] mb-1">Trip Dashboard</h1>
@@ -508,7 +507,7 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
                 </main>

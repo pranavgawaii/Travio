@@ -638,7 +638,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     // ────────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen flex flex-col font-inter pb-20">
+        <div className="min-h-screen flex flex-col font-inter pb-20 animate-fade-in">
 
             {/* TOP NAVIGATION BAR */}
             <header className="flex h-[72px] items-center justify-between px-8 border-b border-[#E5E7EB] bg-[#FAFAFA]/80 backdrop-blur-md sticky top-0 z-30">

@@ -181,8 +181,8 @@ export function Sidebar() {
                             <div className="space-y-2 px-1 py-2">
                                 {Array.from({ length: 4 }).map((_, idx) => (
                                     <div key={idx} className="flex items-center gap-3 rounded-lg px-2 py-1.5">
-                                        <div className="h-6 w-6 animate-pulse rounded bg-[#E5E7EB]" />
-                                        <div className="h-3 flex-1 animate-pulse rounded-full bg-[#E5E7EB]" />
+                                        <div className="h-6 w-6 shimmer rounded bg-[#E5E7EB]" />
+                                        <div className="h-3 flex-1 shimmer rounded-full bg-[#E5E7EB]" />
                                     </div>
                                 ))}
                             </div>

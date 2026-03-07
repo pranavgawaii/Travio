@@ -122,16 +122,17 @@ export default function DashboardPage() {
     const [aiResponse, setAiResponse] = useState<string | null>(null);
 
     useEffect(() => {
-        // Wait for BOTH Clerk to finish AND user to be available
         if (!isLoaded || !user) return;
 
         let active = true;
 
         const run = async () => {
             try {
-                // Seed demo data if needed
+                // Fire seed in background — don't await it.
+                // If demo trips don't exist yet they'll appear after next load.
+                // This keeps the dashboard loading fast.
                 if (user.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com") {
-                    await fetch("/api/demo/seed", {
+                    fetch("/api/demo/seed", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -140,18 +141,17 @@ export default function DashboardPage() {
                             userAvatar: user.imageUrl,
                             userEmail: user.primaryEmailAddress?.emailAddress ?? ""
                         }),
-                        // Removed signal to ensure DB seeding fully completes even if user navigates fast
-                    });
+                    }).catch(() => { /* silent — seed failure is non-fatal */ });
                 }
 
-                // Explicitly wait for seed to finish before fetching trips
+                // Fetch trips immediately without waiting for seed
                 const res = await fetch("/api/trips");
                 if (res.ok) {
                     const data = await res.json();
                     if (active) setTrips(data);
                 }
             } catch (err: any) {
-                console.error("Trip fetch error:", err);
+                console.error("Dashboard fetch error:", err);
             } finally {
                 if (active) setLoading(false);
             }

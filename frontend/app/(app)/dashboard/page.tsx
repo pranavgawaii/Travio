@@ -98,6 +98,9 @@ function UpcomingPlanSkeleton() {
     );
 }
 
+// Module-level guard — survives React StrictMode double-invoke
+let dashboardFetched = false;
+
 export default function DashboardPage() {
     const { user, isLoaded } = useUser();
     const [startDate, setStartDate] = useState<Date>();
@@ -121,7 +124,6 @@ export default function DashboardPage() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiResponse, setAiResponse] = useState<string | null>(null);
 
-    const hasFetched = React.useRef(false);
 
     const fetchTrips = useCallback(async () => {
         try {
@@ -134,8 +136,13 @@ export default function DashboardPage() {
 
     useEffect(() => {
         // Gate on Clerk being ready and only run once
-        if (!isLoaded || hasFetched.current) return;
-        hasFetched.current = true;
+        if (!isLoaded) return;
+        if (dashboardFetched) {
+            // StrictMode 2nd mount — just stop the spinner, data is already in state
+            setLoading(false);
+            return;
+        }
+        dashboardFetched = true;
 
         const setupAndFetch = async () => {
             if (user) {

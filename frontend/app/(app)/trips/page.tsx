@@ -62,12 +62,14 @@ function TripCardSkeleton() {
     );
 }
 
+// Module-level guard — survives React StrictMode double-invoke
+let tripsFetched = false;
+
 export default function TripsPage() {
     const { user, isLoaded } = useUser();
     const [trips, setTrips] = useState<TripData[]>([]);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
-    const hasFetched = React.useRef(false);
 
     useEffect(() => {
         setMounted(true);
@@ -79,9 +81,14 @@ export default function TripsPage() {
     );
 
     useEffect(() => {
-        // Only fetch once when Clerk has finished loading the user
-        if (!isLoaded || hasFetched.current) return;
-        hasFetched.current = true;
+        // Wait for Clerk to finish, then fetch exactly once
+        if (!isLoaded) return;
+        if (tripsFetched) {
+            // Already fetched on a prior mount — just stop the spinner
+            setLoading(false);
+            return;
+        }
+        tripsFetched = true;
 
         const fetchTrips = async () => {
             try {

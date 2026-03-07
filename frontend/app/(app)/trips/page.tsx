@@ -119,7 +119,11 @@ export default function TripsPage() {
                 <div className="flex items-center gap-3">
                     <NotificationBell isDemoUser={isDemoUser} />
                     <div className="ml-1 flex h-6 items-center border-l border-slate-200 pl-4">
-                        <UserButton appearance={{ elements: { avatarBox: "h-8 w-8 ring-1 ring-slate-200 shadow-sm" } }} />
+                        {mounted ? (
+                            <UserButton appearance={{ elements: { avatarBox: "h-8 w-8 ring-1 ring-slate-200 shadow-sm" } }} />
+                        ) : (
+                            <div className="h-8 w-8 rounded-full bg-slate-100 animate-pulse ring-1 ring-slate-200" />
+                        )}
                     </div>
                 </div>
             </header>

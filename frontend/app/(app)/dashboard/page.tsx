@@ -122,43 +122,46 @@ export default function DashboardPage() {
     const [aiResponse, setAiResponse] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isLoaded || !user) return;
+        console.log("[Dashboard] Effect fired:", { isLoaded, userId: user?.id, email: user?.primaryEmailAddress?.emailAddress });
+        if (!isLoaded || !user) {
+            console.log("[Dashboard] Guard blocked — isLoaded:", isLoaded, "user:", !!user);
+            return;
+        }
 
         let active = true;
 
-        const run = async () => {
-            try {
-                // Fire seed in background — don't await it.
-                // If demo trips don't exist yet they'll appear after next load.
-                // This keeps the dashboard loading fast.
-                if (user.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com") {
-                    fetch("/api/demo/seed", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            userId: user.id,
-                            userName: user.fullName || user.firstName || "Traveler",
-                            userAvatar: user.imageUrl,
-                            userEmail: user.primaryEmailAddress?.emailAddress ?? ""
-                        }),
-                    }).catch(() => { /* silent — seed failure is non-fatal */ });
-                }
+        // Safety timeout: never stay stuck on shimmer longer than 8s
+        const safetyTimer = setTimeout(() => {
+            if (active) {
+                console.warn("[Dashboard] Safety timeout hit — forcing loading=false");
+                setLoading(false);
+            }
+        }, 8000);
 
-                // Fetch trips immediately without waiting for seed
+        const run = async () => {
+            const t0 = Date.now();
+            console.log("[Dashboard] Fetching /api/trips...");
+            try {
                 const res = await fetch("/api/trips");
+                console.log("[Dashboard] /api/trips responded:", res.status, "in", Date.now() - t0, "ms");
                 if (res.ok) {
                     const data = await res.json();
+                    console.log("[Dashboard] Got", data.length, "trips");
                     if (active) setTrips(data);
+                } else {
+                    console.error("[Dashboard] Non-OK response:", res.status, await res.text().catch(() => ""));
                 }
             } catch (err: any) {
-                console.error("Dashboard fetch error:", err);
+                console.error("[Dashboard] Fetch error:", err);
             } finally {
+                clearTimeout(safetyTimer);
                 if (active) setLoading(false);
+                console.log("[Dashboard] Loading set to false. active=", active, "elapsed=", Date.now() - t0, "ms");
             }
         };
 
         run();
-        return () => { active = false; };
+        return () => { active = false; clearTimeout(safetyTimer); };
     }, [isLoaded, user?.id]);
 
 

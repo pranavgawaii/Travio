@@ -122,7 +122,8 @@ export default function DashboardPage() {
     const [aiResponse, setAiResponse] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isLoaded) return;
+        // Wait for BOTH Clerk to finish AND user to be available
+        if (!isLoaded || !user) return;
 
         const controller = new AbortController();
         const { signal } = controller;
@@ -130,7 +131,7 @@ export default function DashboardPage() {
         const run = async () => {
             try {
                 // Seed demo data if needed
-                if (user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com") {
+                if (user.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com") {
                     await fetch("/api/demo/seed", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -144,10 +145,17 @@ export default function DashboardPage() {
                     });
                 }
 
+                // Explicitly wait for seed to finish before fetching trips
                 const res = await fetch("/api/trips", { signal });
-                if (res.ok) setTrips(await res.json());
-            } catch {
-                // AbortError is expected on cleanup — silently ignore
+                if (res.ok) {
+                    const data = await res.json();
+                    if (!signal.aborted) setTrips(data);
+                }
+            } catch (err: any) {
+                // Ignore AbortError, log other errors if needed
+                if (err.name !== 'AbortError') {
+                    console.error("Trip fetch error:", err);
+                }
             } finally {
                 if (!signal.aborted) setLoading(false);
             }
@@ -155,8 +163,8 @@ export default function DashboardPage() {
 
         run();
         return () => controller.abort();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoaded]);
+    }, [isLoaded, user?.id, user?.primaryEmailAddress?.emailAddress, user?.fullName, user?.firstName, user?.imageUrl]);
+
 
     const fetchTrips = useCallback(async () => {
         try {

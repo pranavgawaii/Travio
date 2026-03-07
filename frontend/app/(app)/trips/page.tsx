@@ -78,7 +78,8 @@ export default function TripsPage() {
     );
 
     useEffect(() => {
-        if (!isLoaded) return;
+        // Wait for BOTH Clerk to finish AND user to be available
+        if (!isLoaded || !user) return;
 
         const controller = new AbortController();
         const { signal } = controller;
@@ -86,9 +87,15 @@ export default function TripsPage() {
         const fetchTrips = async () => {
             try {
                 const res = await fetch("/api/trips", { signal });
-                if (res.ok) setTrips(await res.json());
-            } catch {
-                // AbortError on cleanup — silently ignore
+                if (res.ok) {
+                    const data = await res.json();
+                    if (!signal.aborted) setTrips(data);
+                }
+            } catch (err: any) {
+                // AbortError on StrictMode cleanup — silently ignore
+                if (err.name !== 'AbortError') {
+                    console.error("Trip fetch error:", err);
+                }
             } finally {
                 if (!signal.aborted) setLoading(false);
             }
@@ -96,9 +103,7 @@ export default function TripsPage() {
 
         fetchTrips();
         return () => controller.abort();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoaded]);
-
+    }, [isLoaded, user?.id, user?.primaryEmailAddress?.emailAddress]); // safely run when user fully populates
 
     const isDemoUser = mounted && user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
 

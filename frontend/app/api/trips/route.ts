@@ -177,9 +177,11 @@ export async function GET() {
         ];
 
         try {
+            // Query by inviteCode so we find stale records regardless of their ownerId,
+            // then patch them with the current userId so the refetch includes them.
             await Promise.all([
-                Trip.updateOne({ title: "Goa March 2026", ownerId: userId }, { $set: goaData }, { upsert: true }),
-                Trip.updateOne({ title: "Manali Adventure", ownerId: userId }, { $set: manaliData }, { upsert: true }),
+                Trip.updateOne({ inviteCode: "GOA2026" }, { $set: { ...goaData, ownerId: userId } }, { upsert: true }),
+                Trip.updateOne({ inviteCode: "MANALI26" }, { $set: { ...manaliData, ownerId: userId } }, { upsert: true }),
             ]);
         } catch (seedErr) {
             console.log("Demo seed error:", seedErr);

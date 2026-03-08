@@ -21,6 +21,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.35.1",
     "lucide-react": "^0.576.0",
+    "cloudinary": "^2.9.0",
     "mongoose": "^9.2.3",
     "next": "16.1.6",
     "radix-ui": "^1.4.3",

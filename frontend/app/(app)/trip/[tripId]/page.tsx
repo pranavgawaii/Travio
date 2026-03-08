@@ -349,7 +349,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     const { tripId } = use(params);
     const { user } = useUser();
     const isDemoUser = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
-    const [, setActiveTab] = useState("itinerary");
+    const [activeTab, setActiveTab] = useState("itinerary");
     const [loading, setLoading] = useState(true);
     const [, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -394,9 +394,10 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     const [isFileModalOpen, setIsFileModalOpen] = useState(false);
     const [fileToUpload, setFileToUpload] = useState<File | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<"flight" | "hotel" | "insurance" | "car" | "general">("general");
+    const [previewFile, setPreviewFile] = useState<TripFile | null>(null);
 
     const router = useRouter();
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://travio.fun").replace(/\/$/, "");
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
 
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState("");
@@ -404,9 +405,9 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     const [deleting, setDeleting] = useState(false);
     const [isCoverHidden, setIsCoverHidden] = useState(false);
     const [transactionFilter, setTransactionFilter] = useState("All");
-    const fetchTrip = useCallback(async () => {
+    const fetchTrip = useCallback(async (isInitial = true) => {
         try {
-            setLoading(true);
+            if (isInitial) setLoading(true);
             setError(null);
             const res = await fetch(`/api/trips/${tripId}`);
             const data = await res.json();
@@ -423,7 +424,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
         } catch {
             setError("A network error occurred. Please try again.");
         } finally {
-            setLoading(false);
+            if (isInitial) setLoading(false);
         }
     }, [tripId]);
 
@@ -502,7 +503,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                 const updated = [...files, newFile];
                 setFiles(updated);
                 await saveTrip({ files: updated });
-                fetchTrip(); // reload to get IDs
+                fetchTrip(false); // reload to get IDs without full page refresh
             } else {
                 alert(data.error || "Upload failed. Please check your Cloudinary configuration.");
             }
@@ -578,7 +579,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
         setChecklists(updated);
         setNewChecklistItems(prev => ({ ...prev, [category]: "" }));
         await saveTrip({ checklist: updated });
-        fetchTrip(); // Get back with IDs
+        fetchTrip(false); // Get back with IDs without refresh
     };
 
     const addNewCategory = async () => {
@@ -588,7 +589,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
         setChecklists(updated);
         setNewCategoryName("");
         await saveTrip({ checklist: updated });
-        fetchTrip();
+        fetchTrip(false);
     };
 
     const deleteChecklistCategory = async (category: string) => {
@@ -614,7 +615,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
 
         setDays(newDays);
         await saveTrip({ days: newDays });
-        fetchTrip();
+        fetchTrip(false);
     };
 
     const handleUpdateRole = async (userId: string, newRole: string) => {
@@ -897,7 +898,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                 </div>
             </div>
 
-            <Tabs defaultValue="itinerary" onValueChange={setActiveTab} className="w-full flex-1 flex flex-col mt-0 border-0 p-0 shadow-none relative">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col mt-0 border-0 p-0 shadow-none relative">
                 <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-40 w-full overflow-hidden py-3">
                     <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8">
                         <TabsList className="inline-flex h-11 items-center justify-start rounded-xl bg-slate-100/80 p-1 text-slate-500 shadow-inner w-full sm:w-auto overflow-x-auto no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -1598,58 +1599,92 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                             title = "Car Rental Info";
                                         }
 
+                                        const isImg = isImageFile(file);
+
                                         return (
-                                            <div key={file._id} className="relative bg-white rounded-[16px] p-6 flex flex-col shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden group">
-
+                                            <div key={file._id} className="relative bg-white rounded-[20px] flex flex-col shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden group hover:shadow-xl hover:border-blue-100/50 transition-all duration-300">
                                                 {/* Left/Right Cutouts to look like a ticket */}
-                                                <div className="absolute left-[-8px] top-1/2 -translate-y-1/2 w-4 h-8 bg-[#FAFAFA] rounded-r-full"></div>
-                                                <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 w-4 h-8 bg-[#FAFAFA] rounded-l-full"></div>
+                                                <div className="absolute left-[-8px] top-1/2 -translate-y-1/2 w-4 h-8 bg-[#FAFAFA] rounded-r-full z-10 border-r border-slate-100"></div>
+                                                <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 w-4 h-8 bg-[#FAFAFA] rounded-l-full z-10 border-l border-slate-100"></div>
 
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className={cn("h-14 w-14 rounded-[14px] flex items-center justify-center", iconBg)}>
-                                                        {icon}
-                                                    </div>
-                                                    {canEdit && (
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-slate-600 rounded-full">
-                                                                    <MoreHorizontal className="h-5 w-5" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-slate-100 min-w-[140px] font-medium" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                                                                {isImageFile(file) && (
-                                                                    <DropdownMenuItem asChild>
-                                                                        <a href={file.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-slate-700 py-2"><Eye className="h-4 w-4 mr-2 text-slate-400" /> Preview</a>
-                                                                    </DropdownMenuItem>
-                                                                )}
-                                                                <DropdownMenuItem onClick={() => deleteFile(file._id)} className="cursor-pointer text-red-500 hover:text-red-600 focus:text-red-500 py-2">
-                                                                    <Trash2 className="h-4 w-4 mr-2" /> Delete File
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
+                                                {/* Premium Card Header / Preview Area */}
+                                                <div className="relative h-44 w-full bg-slate-50 overflow-hidden border-b border-slate-50 flex items-center justify-center">
+                                                    {isImg ? (
+                                                        <Image
+                                                            src={file.url}
+                                                            alt={file.name}
+                                                            fill
+                                                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                    ) : (
+                                                        <div className={cn("h-16 w-16 rounded-2xl flex items-center justify-center shadow-sm", iconBg)}>
+                                                            {React.cloneElement(icon as React.ReactElement, { className: "h-8 w-8" })}
+                                                        </div>
                                                     )}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                                    {/* Actions Overlay */}
+                                                    <div className="absolute top-3 right-3 z-20 flex gap-2">
+                                                        {canEdit && (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <button className="flex items-center justify-center h-8 w-8 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full transition-all text-slate-600 shadow-sm border border-slate-100 opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100">
+                                                                        <MoreHorizontal className="h-4 w-4" />
+                                                                    </button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-slate-100 min-w-[140px] font-medium" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                                    {isImg && (
+                                                                        <DropdownMenuItem onClick={() => setPreviewFile(file)} className="cursor-pointer text-slate-700 py-2">
+                                                                            <Eye className="h-4 w-4 mr-2 text-slate-400" /> View Full
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                    <DropdownMenuItem onClick={() => deleteFile(file._id)} className="cursor-pointer text-red-500 hover:text-red-600 focus:text-red-500 py-2">
+                                                                        <Trash2 className="h-4 w-4 mr-2" /> Delete File
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Category Badge Overlay */}
+                                                    <div className="absolute top-3 left-3 z-20">
+                                                        <Badge className={cn("px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg border-0 shadow-sm", iconBg)}>
+                                                            {title}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
 
-                                                <div className="mb-6">
-                                                    <h4 className="font-bold text-slate-800 text-[17px]" style={{ fontFamily: "'Quicksand', sans-serif" }}>{title}</h4>
-                                                    <p className="text-[13px] font-medium text-slate-400 mt-1 uppercase tracking-wide truncate" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                                                        {file.name}
-                                                    </p>
-                                                </div>
+                                                <div className="p-5 flex flex-col flex-1">
+                                                    <div className="mb-4">
+                                                        <h4 className="font-bold text-slate-800 text-[16px] truncate" style={{ fontFamily: "'Quicksand', sans-serif" }}>{file.name}</h4>
+                                                        <div className="flex items-center gap-1.5 mt-1">
+                                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                                                {file.format || (file.bytes ? "FILE" : "DOCUMENT")}
+                                                            </span>
+                                                            <span className="text-slate-300">•</span>
+                                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                                                {file.bytes ? `${Math.round(file.bytes / 1024)} KB` : "N/A"}
+                                                            </span>
+                                                        </div>
+                                                    </div>
 
-                                                <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 border-dashed">
-                                                    <span className="text-[12px] font-semibold text-slate-400" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                                                        Added {format(new Date(file.createdAt || new Date()), "MMM dd, yyyy")}
-                                                    </span>
-                                                    <a
-                                                        href={file.url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-[13px] font-bold text-[#0066FF] hover:text-[#0066FF]/80 flex items-center gap-1.5 transition-colors"
-                                                        style={{ fontFamily: "'Quicksand', sans-serif" }}
-                                                    >
-                                                        Download <Download className="h-3.5 w-3.5" />
-                                                    </a>
+                                                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider" style={{ fontFamily: "'Quicksand', sans-serif" }}>Uploaded</span>
+                                                            <span className="text-[11px] font-bold text-slate-500" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                                {format(new Date(file.createdAt || new Date()), "MMM dd, yyyy")}
+                                                            </span>
+                                                        </div>
+                                                        <a
+                                                            href={file.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="h-9 px-4 rounded-xl bg-blue-50 text-[#0066FF] hover:bg-[#0066FF] hover:text-white font-bold text-[12px] flex items-center gap-2 transition-all"
+                                                            style={{ fontFamily: "'Quicksand', sans-serif" }}
+                                                        >
+                                                            Download <Download className="h-3.5 w-3.5" />
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
@@ -1885,6 +1920,78 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                     </TabsContent>
                 </div>
             </Tabs>
+            {/* PREMIUM FILE PREVIEW DIALOG */}
+            <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
+                <DialogContent className="max-w-[90vw] sm:max-w-4xl p-0 overflow-hidden border-0 bg-transparent shadow-none" showCloseButton={false}>
+                    <DialogTitle className="sr-only">File Preview: {previewFile?.name}</DialogTitle>
+                    <DialogDescription className="sr-only">Visual preview of the uploaded document</DialogDescription>
+                    {previewFile && (
+                        <div className="relative group/preview flex flex-col items-center">
+                            {/* Actions bar */}
+                            <div className="absolute top-4 left-4 right-4 z-50 flex justify-between items-center bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 opacity-0 group-hover/preview:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover/preview:translate-y-0">
+                                <div className="flex flex-col">
+                                    <span className="text-white font-bold text-sm tracking-tight truncate max-w-[200px] sm:max-w-md">{previewFile.name}</span>
+                                    <span className="text-white/60 text-[10px] uppercase font-bold tracking-widest">{previewFile.documentCategory || "Document"}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <a
+                                        href={previewFile.url}
+                                        download
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-10 px-5 rounded-xl bg-white text-black hover:bg-slate-100 font-bold text-xs flex items-center gap-2 transition-all shadow-lg active:scale-95"
+                                    >
+                                        <Download className="h-4 w-4" /> Download
+                                    </a>
+                                    <button
+                                        onClick={() => setPreviewFile(null)}
+                                        className="h-10 w-10 rounded-xl bg-white/10 hover:bg-red-500 hover:text-white backdrop-blur-sm flex items-center justify-center transition-all text-white border border-white/10 active:scale-95 shadow-lg"
+                                    >
+                                        <Plus className="h-5 w-5 rotate-45" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Main Preview Container */}
+                            <div className="w-full bg-slate-950/90 backdrop-blur-2xl rounded-[3rem] border border-white/10 overflow-hidden shadow-[0_64px_128px_-32px_rgba(0,0,0,0.8)] flex items-center justify-center aspect-[16/10] sm:aspect-auto sm:min-h-[500px] relative">
+                                {isImageFile(previewFile) ? (
+                                    <div className="relative w-full h-full flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent">
+                                        <Image
+                                            src={previewFile.url}
+                                            alt={previewFile.name}
+                                            width={1200}
+                                            height={800}
+                                            className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl transition-transform duration-500 hover:scale-[1.02]"
+                                            priority
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-8 text-white p-24 text-center">
+                                        <div className="h-32 w-32 rounded-[2.5rem] bg-white/5 flex items-center justify-center shadow-inner border border-white/10 ring-1 ring-white/10">
+                                            <FileText className="h-16 w-16 text-[#0066FF]" />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <h3 className="text-3xl font-bold tracking-tight bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent" style={{ fontFamily: "'Quicksand', sans-serif" }}>No Preview Available</h3>
+                                            <p className="text-white/40 max-w-sm mx-auto text-lg font-medium leading-relaxed">This document format cannot be previewed directly. Please download to view.</p>
+                                        </div>
+                                        <a href={previewFile.url} target="_blank" rel="noopener noreferrer" className="px-10 py-5 rounded-2xl bg-[#0066FF] hover:bg-blue-600 font-bold transition-all shadow-[0_20px_50px_-12px_rgba(0,102,255,0.5)] active:scale-95 text-lg">
+                                            Open Document
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Backdrop click to close helper */}
+                            <div className="mt-8 text-white/30 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse flex items-center gap-4">
+                                <div className="h-[1px] w-8 bg-white/10" />
+                                Click outside to exit
+                                <div className="h-[1px] w-8 bg-white/10" />
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
+

@@ -49,7 +49,7 @@ export default function JoinTripPage({ params }: { params: Promise<{ inviteCode:
     const { inviteCode } = use(params);
     const router = useRouter();
     const { user, isLoaded } = useUser();
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://travio.fun").replace(/\/$/, "");
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
 
     const [loading, setLoading] = useState(true);
     const [joining, setJoining] = useState(false);

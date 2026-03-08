@@ -1,53 +1,110 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure once (server-side only — API secret is never exposed to client)
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+});
+
+// Allowed MIME types
+const ALLOWED_TYPES = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "application/pdf",
+]);
+
+// 10 MB limit
+const MAX_BYTES = 10 * 1024 * 1024;
 
 export async function POST(request: Request) {
+    // ── Auth guard ────────────────────────────────────────────────
     const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
-
-    if (!cloudName || !uploadPreset) {
-        return NextResponse.json({ error: "Cloudinary not configured" }, { status: 500 });
+    // ── Config guard ──────────────────────────────────────────────
+    if (
+        !process.env.CLOUDINARY_CLOUD_NAME ||
+        !process.env.CLOUDINARY_API_KEY ||
+        !process.env.CLOUDINARY_API_SECRET
+    ) {
+        console.error("Cloudinary env vars missing");
+        return NextResponse.json(
+            { error: "File upload service is not configured. Please contact the admin." },
+            { status: 500 }
+        );
     }
 
     try {
         const formData = await request.formData();
-        const file = formData.get("file") as File;
+        const file = formData.get("file") as File | null;
 
-        if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
-
-        // Re-pack and send to Cloudinary unsigned upload endpoint
-        const cloudinaryFormData = new FormData();
-        cloudinaryFormData.append("file", file);
-        cloudinaryFormData.append("upload_preset", uploadPreset);
-        cloudinaryFormData.append("folder", `travio/${userId}`);
-
-        const res = await fetch(
-            `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-            { method: "POST", body: cloudinaryFormData }
-        );
-
-        if (!res.ok) {
-            const err = await res.json();
-            return NextResponse.json({ error: err.error?.message || "Upload failed" }, { status: 500 });
+        // ── File presence ──────────────────────────────────────────
+        if (!file) {
+            return NextResponse.json({ error: "No file provided" }, { status: 400 });
         }
 
-        const data = await res.json();
+        // ── File type validation ───────────────────────────────────
+        if (!ALLOWED_TYPES.has(file.type)) {
+            return NextResponse.json(
+                { error: `Unsupported file type: ${file.type}. Allowed: JPG, PNG, WEBP, PDF.` },
+                { status: 400 }
+            );
+        }
+
+        // ── File size validation ───────────────────────────────────
+        if (file.size > MAX_BYTES) {
+            return NextResponse.json(
+                { error: `File too large. Maximum size is 10 MB.` },
+                { status: 400 }
+            );
+        }
+
+        // ── Convert File → Buffer for Cloudinary SDK ──────────────
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        // ── Upload via SDK (signed, server-side) ──────────────────
+        const result = await new Promise<any>((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: `travio/${userId}`,
+                    resource_type: "auto",      // handles images + PDFs
+                    use_filename: true,
+                    unique_filename: true,
+                    overwrite: false,
+                    // Tag for easy Cloudinary dashboard filtering
+                    tags: ["travio", userId],
+                },
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result);
+                }
+            );
+            uploadStream.end(buffer);
+        });
+
+        // ── Return structured response ────────────────────────────
         return NextResponse.json({
-            url: data.secure_url,
-            publicId: data.public_id,
-            format: data.format,
-            bytes: data.bytes,
-            resourceType: data.resource_type,
-            width: data.width,
-            height: data.height,
+            url: result.secure_url,
+            publicId: result.public_id,
+            format: result.format,
+            bytes: result.bytes,
+            resourceType: result.resource_type,
+            width: result.width ?? null,
+            height: result.height ?? null,
             name: file.name,
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.error("[upload] Cloudinary error:", error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Upload failed" },
+            { error: error?.message ?? "Upload failed. Please try again." },
             { status: 500 }
         );
     }

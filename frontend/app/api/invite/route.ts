@@ -36,7 +36,7 @@ export async function POST(request: Request) {
             await trip.save();
         }
 
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "") : "https://travio.fun";
+        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
 
         return NextResponse.json({
             inviteLink: `${appUrl}/join/${trip.inviteCode}`

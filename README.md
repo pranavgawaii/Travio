@@ -194,6 +194,25 @@ npm run dev --prefix frontend
 ```
 The application will launch on [http://localhost:3000](http://localhost:3000).
 
+## 📚 Project Learnings
+
+Building Travio was a deep dive into the realities of shipping a collaborative full-stack application. Beyond just the syntax, several core engineering lessons stood out:
+
+### 🧩 Product Thinking: From Chaos to Cohesion
+Group travel is notorious for being "planned" across fragmented WhatsApp chats and messy spreadsheets. The true challenge was building a product that felt as flexible as a chat but as organized as a database. I learned that product thinking isn't just about features; it’s about mapping digital workflows to human behavior—ensuring that shifting from a checklist to a budget ledger feels intuitive, not technical.
+
+### 🧬 Database Modeling & Schema Evolution
+Handling complex, nested data like trip itineraries (Days → Activities → Costs) in MongoDB taught me the importance of schema design early in the build. I had to balance between "flat" structures for easy querying and "nested" documents for faster read performance. This project solidified my understanding of when to embed data versus when to reference it to keep the frontend state management clean and predictable.
+
+### 🔐 Security & Role-Based Access Control (RBAC)
+Collaboration without permissions is a recipe for data loss. Implementing logic for `Owner`, `Editor`, and `Viewer` roles was a lesson in building robust authorization layers. It’s one thing to hide a "Delete" button in CSS; it’s another to enforce that restriction at the API and database levels to ensure trip data remains secure regardless of the client-side state.
+
+### 🖼️ Image Optimization & Performance Awareness
+For a travel app, visual appeal is everything, but heavy images kill performance. I focused on "Performance Awareness" by implementing automated image optimization using Cloudinary and Next.js, leveraging modern formats like WEBP and AVIF with responsive sizing. This taught me that production-readiness means considering the user’s data plan and device performance as much as the UI aesthetics.
+
+### 🚀 Production Deployment & Real-World Stability
+Deploying to Vercel was the "moment of truth." I learned the importance of strict environment variable management and how to handle hydration errors that only appear in production builds. It reinforced the idea that a project isn't "done" until it is stable, secure, and performant in a real-world edge environment, shifting my focus from "just making it work" to "making it scale."
+
 ---
 
 <div align="center">

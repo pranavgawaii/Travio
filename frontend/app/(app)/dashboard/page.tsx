@@ -122,41 +122,26 @@ export default function DashboardPage() {
     const [aiResponse, setAiResponse] = useState<string | null>(null);
 
     useEffect(() => {
-        console.log("[Dashboard] Effect fired:", { isLoaded, userId: user?.id, email: user?.primaryEmailAddress?.emailAddress });
-        if (!isLoaded || !user) {
-            console.log("[Dashboard] Guard blocked — isLoaded:", isLoaded, "user:", !!user);
-            return;
-        }
+        if (!isLoaded || !user) return;
 
         let active = true;
 
-        // Safety timeout: never stay stuck on shimmer longer than 8s
         const safetyTimer = setTimeout(() => {
-            if (active) {
-                console.warn("[Dashboard] Safety timeout hit — forcing loading=false");
-                setLoading(false);
-            }
+            if (active) setLoading(false);
         }, 8000);
 
         const run = async () => {
-            const t0 = Date.now();
-            console.log("[Dashboard] Fetching /api/trips...");
             try {
                 const res = await fetch("/api/trips");
-                console.log("[Dashboard] /api/trips responded:", res.status, "in", Date.now() - t0, "ms");
                 if (res.ok) {
                     const data = await res.json();
-                    console.log("[Dashboard] Got", data.length, "trips");
                     if (active) setTrips(data);
-                } else {
-                    console.error("[Dashboard] Non-OK response:", res.status, await res.text().catch(() => ""));
                 }
             } catch (err: any) {
                 console.error("[Dashboard] Fetch error:", err);
             } finally {
                 clearTimeout(safetyTimer);
                 if (active) setLoading(false);
-                console.log("[Dashboard] Loading set to false. active=", active, "elapsed=", Date.now() - t0, "ms");
             }
         };
 

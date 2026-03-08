@@ -397,7 +397,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     const [previewFile, setPreviewFile] = useState<TripFile | null>(null);
 
     const router = useRouter();
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "")).replace(/\/$/, "");
 
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState("");

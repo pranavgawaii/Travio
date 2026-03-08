@@ -79,27 +79,32 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
         disabled: !canEdit
     });
     const [editForm, setEditForm] = useState(item);
+    const [comments, setComments] = useState<{ id: number; text: string; user: string; avatar: string; time: string; isYou: boolean }[]>([]);
+    const [newComment, setNewComment] = useState("");
 
     useEffect(() => {
         setEditForm(item);
     }, [item]);
 
+    const handleSendComment = () => {
+        const text = newComment.trim();
+        if (!text) return;
+        setComments(prev => [
+            ...prev,
+            {
+                id: Date.now(),
+                text,
+                user: user?.fullName || user?.firstName || "You",
+                avatar: user?.imageUrl || "",
+                time: "just now",
+                isYou: true,
+            }
+        ]);
+        setNewComment("");
+    };
+
     const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
     const isFlight = item.category === 'Flight';
-
-    const commentCount = actIdx * 3 + (actIdx === 0 ? 2 : 0);
-    const dummyComments = Array.from({ length: commentCount }).map((_, i) => {
-        const member = (tripMembers || [])[i % (tripMembers?.length || 1)];
-        const isYou = user?.id === member?.userId;
-        return {
-            id: i,
-            text: ["Can't wait to check this out!", "Are we booking this in advance?", "Looks a bit expensive, but I'm down.", "Let's make sure we leave early for this.", "I'll handle the tickets.", "Who else is joining this?"][i % 6],
-            user: isYou ? (user?.fullName || user?.firstName || "You") : (member?.name || "Traveler"),
-            avatar: isYou ? user?.imageUrl : (member?.avatar || `https://ui-avatars.com/api/?name=User`),
-            time: `${i + 1}h ago`,
-            isYou: isYou
-        };
-    });
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
@@ -219,13 +224,13 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
                             <div className="pt-6 border-t border-slate-100">
                                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-4 flex items-center justify-between">
                                     Discussion
-                                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{dummyComments.length}</span>
+                                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{comments.length}</span>
                                 </label>
-                                <div className="space-y-4 mb-4">
-                                    {dummyComments.length === 0 ? (
+                                <div className="space-y-4 mb-4 max-h-48 overflow-y-auto">
+                                    {comments.length === 0 ? (
                                         <p className="text-sm text-slate-400 italic">No comments yet. Start the discussion!</p>
                                     ) : (
-                                        dummyComments.map((comment) => (
+                                        comments.map((comment) => (
                                             <div key={comment.id} className="flex gap-3">
                                                 <Avatar className="h-8 w-8 shrink-0 border border-slate-200">
                                                     <AvatarImage src={normalizeRemoteImage(comment.avatar || "", 32, 21)} />
@@ -246,8 +251,19 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
                                     )}
                                 </div>
                                 <div className="flex gap-2">
-                                    <Input placeholder="Type a message..." className="h-10 rounded-xl border-slate-200 focus-visible:ring-[#0066FF]/20 text-[13px]" />
-                                    <Button size="icon" className="h-10 w-10 shrink-0 rounded-xl bg-[#0066FF] hover:bg-[#0066FF]/90 text-white shadow-sm">
+                                    <Input
+                                        placeholder="Type a message…"
+                                        className="h-10 rounded-xl border-slate-200 focus-visible:ring-[#0066FF]/20 text-[13px]"
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+                                    />
+                                    <Button
+                                        size="icon"
+                                        className="h-10 w-10 shrink-0 rounded-xl bg-[#0066FF] hover:bg-[#0066FF]/90 text-white shadow-sm disabled:opacity-40"
+                                        onClick={handleSendComment}
+                                        disabled={!newComment.trim()}
+                                    >
                                         <MessageSquare className="h-4 w-4" />
                                     </Button>
                                 </div>

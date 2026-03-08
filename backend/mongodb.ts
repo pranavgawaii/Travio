@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
+import dns from "dns";
 
+// Force IPv4 DNS resolution — fixes "querySrv ENOTFOUND" on Vercel serverless
+dns.setDefaultResultOrder("ipv4first");
 
 // Use a cached connection to avoid re-connecting on every hot-reload in dev
 interface MongooseCache {
@@ -28,10 +31,11 @@ export async function connectDB(): Promise<typeof mongoose> {
         console.log("🛠️  Connecting to MongoDB...");
         cached.promise = mongoose.connect(MONGODB_URI, {
             bufferCommands: false,
-            serverSelectionTimeoutMS: 3000,
-            connectTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 15000,
+            connectTimeoutMS: 15000,
             socketTimeoutMS: 30000,
             maxPoolSize: 10,
+            family: 4, // Force IPv4 — fixes SRV DNS resolution failures on Vercel
         }).then((m) => {
             console.log("✅ MongoDB Connected Successfully");
             return m;

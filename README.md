@@ -1,53 +1,123 @@
 <div align="center">
 
-# ✈️ Travio
+<img src="frontend/public/icon.svg" alt="Travio Logo" width="100" />
+
+# Travio
 **Collaborative Trip Planning, Reimagined.**
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Clerk](https://img.shields.io/badge/Clerk-Auth-6C47FF?style=for-the-badge&logo=clerk&logoColor=white)](https://clerk.com/)
+*A submission for the Web Dev Cohort 2026 Buildathon — Problem Statement 3.*
 
+
+
+<br/>
+
+<img src="frontend/public/hero-section.png" alt="Travio Landing Page" style="border-radius: 12px; border: 1px solid #333;" />
 </div>
 
-<br />
+<br/>
 
-## 🌍 Overview
+## 🌍 Project Overview
 
-**Travio** is a modern, collaborative platform designed to take the friction out of group travel. Say goodbye to scattered WhatsApp groups, lost flight tickets, and confusing split bills. Travio brings everything into one beautiful, real-time dashboard so you can focus on the adventure, not the logistics.
+**Travio** is a full-stack, real-time collaborative platform designed to orchestrate group travel without the friction. Built entirely from scratch to address **Problem Statement 3**, Travio shifts group trip planning away from disorganized WhatsApp chats and Google Sheets into a single, cohesive, premium dashboard. 
 
-Built for a seamless user experience, Travio allows friends to build itineraries together, track expenses, and manage travel documents securely and elegantly.
-
----
-
-## ✨ Key Features
-
-- **🎒 Collaborative Itineraries:** Build day-by-day travel plans with your friends in real-time.
-- **💸 Expense Tracking & Splitting:** Easily log expenses and instantly see who owes what.
-- **🔐 Secure Authentication:** Enterprise-grade security handling seamlessly powered by Clerk.
-- **📄 Centralized Document Storage:** Keep tickets, boarding passes, and bookings in one accessible place.
-- **👥 Role-Based Access:** Assign `owner`, `editor`, and `viewer` permissions to group members.
-- **🎨 Premium UI/UX:** A highly polished, responsive interface built with Tailwind CSS and Shadcn UI.
+Travio maps exactly to the real-world workflow of modern travelers—managing complex states across day-wise itineraries, split budgets, checklist ownership, and role-based permissions simultaneously.
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Features Implemented (As per Hackathon Prompt)
 
-Travio is built using a modern, scalable, and type-safe architecture:
+### 📌 Trip Planning
+- **Create Trip Workspace:** Users can instantiate trips with titles, dates, destinations, and a designated owner.
+- **Day-Wise Itinerary Builder:** Dynamic scheduling of days based on the trip's start and end date.
+- **Activity Cards:** Embedded activities per day, complete with timing, location mapping, cost assignment, and categorization.
+- **Dynamic Reordering:** Intuitive logic mapping for sorting activities sequentially across a given day.
 
-- **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS, Shadcn UI
-- **Backend:** Next.js API Routes (Serverless), Node.js
-- **Database:** MongoDB (Mongoose)
-- **Authentication:** Clerk
-- **Media Optimization:** Next/Image with remote caching
+### 🤝 Collaboration
+- **Invite Engine:** Seamlessly invite members via unique, instantly generated `inviteCodes`.
+- **Role-Based Access Control (RBAC):** Strict authorization logic determining action capabilities for `Owner`, `Editor`, and `Viewer`.
+
+### 🗂️ Organization & Financials
+- **Budget Tracking & Expense Summary:** A global financial ledger tracking categorical expenses, defining "who paid what", and aggregating the trip's total cost.
+- **Checklist Engine:** Real-time state management for packing and to-do lists to ensure no traveler forgets the essentials.
+- **File Attachments:** Central vault for digital tickets, PDFs, and reservation confirmations via cloud storage.
+
+<br/>
+
+<div align="center">
+<img src="frontend/public/dashboard-preview.png" alt="Travio Dashboard" style="border-radius: 12px; border: 1px solid #333;" />
+</div>
+
+<br/>
 
 ---
 
-## 🚀 Getting Started
+## 🧬 System Architecture & DB Schema
 
-If you'd like to run Travio locally:
+Travio utilizes a customized Model-View-Controller (MVC) serverless pattern. The backend routes act as microservices hosted on Next.js Edge infrastructure communicating natively with a **MongoDB** document instance.
+
+### Database Schema (Entity Relationship)
+
+```mermaid
+erDiagram
+    USER ||--o{ TRIP : "owns / participates"
+    TRIP ||--|{ MEMBER : "has"
+    TRIP ||--|{ DAY : "contains"
+    TRIP ||--o{ EXPENSE : "tracks"
+    TRIP ||--o{ CHECKLIST_ITEM : "requires"
+    TRIP ||--o{ FILE : "stores"
+
+    TRIP {
+        ObjectId _id
+        String title
+        String destination
+        Date startDate
+        Date endDate
+        String ownerId
+        String inviteCode
+    }
+
+    MEMBER {
+        String userId
+        String name
+        String role "owner, editor, viewer"
+    }
+
+    DAY {
+        String label
+        Date date
+        Activity[] activities
+    }
+
+    ACTIVITY {
+        String title
+        String time
+        String location
+        Number cost
+        String category
+    }
+
+    EXPENSE {
+        String name
+        Number amount
+        String paidBy
+        Date date
+    }
+```
+
+---
+
+## 🛠️ Security & Production Readiness
+
+- **Resilient Auth:** Handled by [Clerk](https://clerk.com/) SDK at the edge middleware level. It securely redirects unauthorized users while allowing API routes to extract `userId` globally.
+- **Data Integrity:** Mongoose schemas enforce strictly validated type casting.
+- **Hydration & State Sync:** Optimized `useEffect` and React Context implementations for flawless hydration (preventing server-to-client UI breaking).
+
+---
+
+## 🚀 Setup Instructions
+
+### Prerequisites
+You will need Node.js (v18+), npm, and a MongoDB Cluster URI.
 
 ### 1. Clone the repository
 ```bash
@@ -56,41 +126,48 @@ cd Travio
 ```
 
 ### 2. Install dependencies
+Travio is structured as a monorepo internally utilizing modern package boundaries.
 ```bash
-# We use a monorepo-style structure
+# Install Frontend
 npm install --prefix frontend
+
+# Install Backend dependencies
 npm install --prefix backend
 ```
 
-### 3. Set up environment variables
-Create a `.env.local` file inside the `/frontend` directory and add your keys:
+### 3. Environment Variables
+Create a `.env.local` file inside the `/frontend` directory and provide the necessary credentials:
 ```env
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 CLERK_SECRET_KEY=your_clerk_secret_key
-MONGODB_URI=your_mongodb_connection_string
+MONGODB_URI=your_mongodb_cluster_uri
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Clerk redirect configuration
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/trips
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/trips
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 ```
 
-### 4. Start the development server
+### 4. Run the Application
+Start the Next.js development server:
 ```bash
-npm run dev
+npm run dev --prefix frontend
 ```
-The app will be running at `http://localhost:3000`.
+The application will launch on [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 👨‍💻 Developed By
-
-Designed and engineered with passion by **Pranav Gawai**.  
-If you find this project interesting or helpful, please consider giving it a ⭐ to show your support!
-
----
 <div align="center">
-  <i>Built for the hackers, traveler enthusiasts, and builders.</i>
+  
+### 👨‍💻 Developed By
+
+Engineered and designed by **[Pranav Gawai](https://github.com/pranavgawaii)** for the Chaicode Cohort 2026 Buildathon.
+
+⭐ **If you find this project interesting or helpful, please consider giving it a star to show your support!**
+
+<br/>
+
+> *I confirm this submission is my original work product, solely owned by me, and does not violate the intellectual property rights of any other person or entity.*
+
 </div>

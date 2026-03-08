@@ -178,10 +178,53 @@ export async function GET() {
 
         try {
             // Use updateOne with upsert to maintain stable IDs. 
-            // If we find them by inviteCode, we patch them with current data and ownerId.
+            // We use $set for metadata that should stay fresh,
+            // and $setOnInsert for user-modifiable content so joined members/changes aren't wiped.
             await Promise.all([
-                Trip.updateOne({ inviteCode: "GOA2026" }, { $set: { ...goaData, ownerId: userId } }, { upsert: true }),
-                Trip.updateOne({ inviteCode: "MANALI26" }, { $set: { ...manaliData, ownerId: userId } }, { upsert: true }),
+                Trip.updateOne(
+                    { inviteCode: "GOA2026" },
+                    {
+                        $set: {
+                            title: goaData.title,
+                            destination: goaData.destination,
+                            startDate: goaData.startDate,
+                            endDate: goaData.endDate,
+                            coverImage: goaData.coverImage,
+                            ownerId: userId,
+                            isDemo: true
+                        },
+                        $setOnInsert: {
+                            members: goaData.members,
+                            days: goaData.days,
+                            expenses: goaData.expenses,
+                            checklist: goaData.checklist,
+                            files: goaData.files
+                        }
+                    },
+                    { upsert: true }
+                ),
+                Trip.updateOne(
+                    { inviteCode: "MANALI26" },
+                    {
+                        $set: {
+                            title: manaliData.title,
+                            destination: manaliData.destination,
+                            startDate: manaliData.startDate,
+                            endDate: manaliData.endDate,
+                            coverImage: manaliData.coverImage,
+                            ownerId: userId,
+                            isDemo: true
+                        },
+                        $setOnInsert: {
+                            members: manaliData.members,
+                            days: manaliData.days,
+                            expenses: manaliData.expenses,
+                            checklist: manaliData.checklist,
+                            files: manaliData.files
+                        }
+                    },
+                    { upsert: true }
+                ),
             ]);
         } catch (seedErr) {
             console.error("Demo seed error:", seedErr);

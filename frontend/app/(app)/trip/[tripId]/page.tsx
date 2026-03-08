@@ -1618,7 +1618,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                                         />
                                                     ) : (
                                                         <div className={cn("h-16 w-16 rounded-2xl flex items-center justify-center shadow-sm", iconBg)}>
-                                                            {React.cloneElement(icon as React.ReactElement, { className: "h-8 w-8" })}
+                                                            {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "h-8 w-8" })}
                                                         </div>
                                                     )}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

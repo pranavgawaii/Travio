@@ -177,17 +177,14 @@ export async function GET() {
         ];
 
         try {
-            // Query by inviteCode so we find stale records regardless of their ownerId,
-            // then patch them with the current userId so the refetch includes them.
-            await Promise.all([
-                Trip.updateOne({ inviteCode: "GOA2026" }, { $set: { ...goaData, ownerId: userId } }, { upsert: true }),
-                Trip.updateOne({ inviteCode: "MANALI26" }, { $set: { ...manaliData, ownerId: userId } }, { upsert: true }),
-            ]);
+            // Wipe any stale records (wrong ownerId, missing isDemo, etc.) then recreate fresh
+            await Trip.deleteMany({ inviteCode: { $in: ["GOA2026", "MANALI26"] } });
+            await Trip.insertMany([goaData, manaliData], { ordered: false });
         } catch (seedErr) {
-            console.log("Demo seed error:", seedErr);
+            console.error("Demo seed error:", seedErr);
         }
 
-        // Re-fetch to return the freshly upserted trips
+        // Re-fetch to return the freshly inserted trips
         trips = await Trip.find({
             $or: [{ ownerId: userId }, { "members.userId": userId }],
         }).sort({ startDate: -1 }).lean();

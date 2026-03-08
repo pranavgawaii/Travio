@@ -78,6 +78,17 @@ const TripFileSchema = new Schema(
     { timestamps: true }
 );
 
+const ActivityCommentSchema = new Schema(
+    {
+        activityId: { type: String, required: true },
+        userId: { type: String, required: true },
+        userName: { type: String, required: true },
+        avatar: { type: String, default: "" },
+        text: { type: String, required: true },
+    },
+    { timestamps: true }
+);
+
 // ─── Main Trip Schema ─────────────────────────────────────────────────────────
 
 export interface ITrip extends Document {
@@ -138,6 +149,15 @@ export interface ITrip extends Document {
     }[];
     inviteCode: string;
     isDemo: boolean;
+    activityComments: {
+        _id?: string;
+        activityId: string;
+        userId: string;
+        userName: string;
+        avatar?: string;
+        text: string;
+        createdAt?: Date;
+    }[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -161,6 +181,7 @@ const TripSchema = new Schema<ITrip>(
             default: () => Math.random().toString(36).substring(2, 10).toUpperCase(),
         },
         isDemo: { type: Boolean, default: false },
+        activityComments: { type: [ActivityCommentSchema], default: [] },
     },
     { timestamps: true }
 );

@@ -73,34 +73,106 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteActivity, tripMembers, canEdit }: any) {
+function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteActivity, tripMembers, canEdit, tripId }: any) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: item._id,
         disabled: !canEdit
     });
     const [editForm, setEditForm] = useState(item);
-    const [comments, setComments] = useState<{ id: number; text: string; user: string; avatar: string; time: string; isYou: boolean }[]>([]);
+    const [comments, setComments] = useState<{ id: string; text: string; user: string; avatar: string; time: string; isYou: boolean }[]>([]);
     const [newComment, setNewComment] = useState("");
+    const [loadingComments, setLoadingComments] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [sheetOpen, setSheetOpen] = useState(false);
+
+    const DUMMY_SEEDS = [
+        "Can't wait for this one! 🙌",
+        "Are we booking this in advance?",
+        "Looks expensive but totally worth it.",
+        "Let's leave early to avoid the crowd.",
+        "I'll handle the tickets for everyone.",
+        "Who else is joining this activity?",
+        "Should we split the cost equally?",
+        "This is going to be epic!",
+        "Reminder: wear comfortable shoes.",
+    ];
 
     useEffect(() => {
         setEditForm(item);
     }, [item]);
 
-    const handleSendComment = () => {
+    useEffect(() => {
+        if (!sheetOpen || !tripId || !item._id) return;
+        setLoadingComments(true);
+        fetch(`/api/trips/${tripId}/comments?activityId=${item._id}`)
+            .then(r => r.json())
+            .then((data: any[]) => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    // Seed dummy comments for this activity
+                    const count = [3, 4, 9][actIdx % 3];
+                    const seeds = Array.from({ length: count }, (_, i) => {
+                        const member = (tripMembers || [])[i % Math.max(tripMembers?.length || 1, 1)];
+                        const isYou = user?.id === member?.userId;
+                        return {
+                            id: `seed-${actIdx}-${i}`,
+                            text: DUMMY_SEEDS[(actIdx + i) % DUMMY_SEEDS.length],
+                            user: isYou ? (user?.fullName || "You") : (member?.name || "Traveler"),
+                            avatar: isYou ? user?.imageUrl : (member?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(member?.name || "T")}&background=random`),
+                            time: `${i + 1}h ago`,
+                            isYou,
+                        };
+                    });
+                    setComments(seeds);
+                } else {
+                    setComments(data.map((c: any) => ({
+                        id: c._id,
+                        text: c.text,
+                        user: c.userName,
+                        avatar: c.avatar,
+                        time: new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        isYou: c.userId === user?.id,
+                    })));
+                }
+            })
+            .catch(() => { })
+            .finally(() => setLoadingComments(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sheetOpen, tripId, item._id]);
+
+    const handleSendComment = async () => {
         const text = newComment.trim();
-        if (!text) return;
-        setComments(prev => [
-            ...prev,
-            {
-                id: Date.now(),
-                text,
-                user: user?.fullName || user?.firstName || "You",
-                avatar: user?.imageUrl || "",
-                time: "just now",
-                isYou: true,
-            }
-        ]);
+        if (!text || sending) return;
+        setSending(true);
+        // Optimistic update
+        const optimistic = {
+            id: `opt-${Date.now()}`,
+            text,
+            user: user?.fullName || user?.firstName || "You",
+            avatar: user?.imageUrl || "",
+            time: "just now",
+            isYou: true,
+        };
+        setComments(prev => [...prev, optimistic]);
         setNewComment("");
+        try {
+            const res = await fetch(`/api/trips/${tripId}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ activityId: item._id, text }),
+            });
+            const saved = await res.json();
+            if (res.ok) {
+                setComments(prev => prev.map(c =>
+                    c.id === optimistic.id
+                        ? { ...c, id: saved._id, time: new Date(saved.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+                        : c
+                ));
+            }
+        } catch {
+            // keep optimistic comment on failure
+        } finally {
+            setSending(false);
+        }
     };
 
     const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
@@ -108,7 +180,7 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <Sheet>
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetTrigger asChild>
                     <div className="group bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer relative text-left">
                         <div className="flex justify-between items-center mb-3">
@@ -227,7 +299,11 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
                                     <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{comments.length}</span>
                                 </label>
                                 <div className="space-y-4 mb-4 max-h-48 overflow-y-auto">
-                                    {comments.length === 0 ? (
+                                    {loadingComments ? (
+                                        <div className="flex items-center gap-2 text-slate-400 text-sm">
+                                            <Loader2 className="h-4 w-4 animate-spin" /> Loading discussion…
+                                        </div>
+                                    ) : comments.length === 0 ? (
                                         <p className="text-sm text-slate-400 italic">No comments yet. Start the discussion!</p>
                                     ) : (
                                         comments.map((comment) => (
@@ -257,14 +333,15 @@ function SortableActivity({ item, actIdx, dayIdx, user, updateActivity, deleteAc
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
                                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+                                        disabled={sending}
                                     />
                                     <Button
                                         size="icon"
                                         className="h-10 w-10 shrink-0 rounded-xl bg-[#0066FF] hover:bg-[#0066FF]/90 text-white shadow-sm disabled:opacity-40"
                                         onClick={handleSendComment}
-                                        disabled={!newComment.trim()}
+                                        disabled={!newComment.trim() || sending}
                                     >
-                                        <MessageSquare className="h-4 w-4" />
+                                        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </div>
@@ -987,6 +1064,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                                             updateActivity={updateActivity}
                                                             deleteActivity={deleteActivity}
                                                             canEdit={canEdit}
+                                                            tripId={trip?._id}
                                                         />
                                                     ))}
                                                 </SortableContext>

@@ -7,12 +7,18 @@
 
 *A submission for the Web Dev Cohort 2026 Buildathon — Problem Statement 3.*
 
-
-
 <br/>
 
 <img src="frontend/public/hero-section.png" alt="Travio Landing Page" style="border-radius: 12px; border: 1px solid #333;" />
 </div>
+
+<br/>
+
+## 🔗 Live Links
+
+🌍 Live Website: https://travio.fun  
+🎥 Demo Video: https://youtu.be/lZED4XvoGQ0  
+📂 Repository: https://github.com/pranavgawaii/Travio
 
 <br/>
 
@@ -21,6 +27,14 @@
 **Travio** is a full-stack, real-time collaborative platform designed to orchestrate group travel without the friction. Built entirely from scratch to address **Problem Statement 3**, Travio shifts group trip planning away from disorganized WhatsApp chats and Google Sheets into a single, cohesive, premium dashboard. 
 
 Travio maps exactly to the real-world workflow of modern travelers—managing complex states across day-wise itineraries, split budgets, checklist ownership, and role-based permissions simultaneously.
+
+---
+
+## 🎥 Product Demo
+
+Watch a quick walkthrough of Travio and its core workflows.
+
+https://youtu.be/lZED4XvoGQ0
 
 ---
 
@@ -41,11 +55,7 @@ Travio maps exactly to the real-world workflow of modern travelers—managing co
 - **Checklist Engine:** Real-time state management for packing and to-do lists to ensure no traveler forgets the essentials.
 - **File Attachments:** Central vault for digital tickets, PDFs, and reservation confirmations via cloud storage.
 
-
-
 <br/>
-
-
 
 ## 🧬 System Architecture & DB Schema
 
@@ -107,6 +117,38 @@ erDiagram
 - **Resilient Auth:** Handled by [Clerk](https://clerk.com/) SDK at the edge middleware level. It securely redirects unauthorized users while allowing API routes to extract `userId` globally.
 - **Data Integrity:** Mongoose schemas enforce strictly validated type casting.
 - **Hydration & State Sync:** Optimized `useEffect` and React Context implementations for flawless hydration (preventing server-to-client UI breaking).
+
+---
+
+## ⚙️ Tech Stack
+
+Frontend:
+- Next.js
+- React
+- TailwindCSS
+
+Backend:
+- Next.js API Routes
+- Node.js
+
+Database:
+- MongoDB Atlas
+- Mongoose
+
+Authentication:
+- Clerk
+
+Infrastructure:
+- Vercel (Deployment)
+- Cloudinary (File Uploads)
+
+---
+
+## 🌐 Live Deployment
+
+Travio is deployed and accessible online.
+
+https://travio.fun
 
 ---
 

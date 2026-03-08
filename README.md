@@ -24,7 +24,7 @@ Travio maps exactly to the real-world workflow of modern travelers—managing co
 
 ---
 
-## ✨ Features Implemented (As per Hackathon Prompt)
+## ✨ Features Implemented 
 
 ### 📌 Trip Planning
 - **Create Trip Workspace:** Users can instantiate trips with titles, dates, destinations, and a designated owner.
@@ -41,15 +41,11 @@ Travio maps exactly to the real-world workflow of modern travelers—managing co
 - **Checklist Engine:** Real-time state management for packing and to-do lists to ensure no traveler forgets the essentials.
 - **File Attachments:** Central vault for digital tickets, PDFs, and reservation confirmations via cloud storage.
 
-<br/>
 
-<div align="center">
-<img src="frontend/public/dashboard-preview.png" alt="Travio Dashboard" style="border-radius: 12px; border: 1px solid #333;" />
-</div>
 
 <br/>
 
----
+
 
 ## 🧬 System Architecture & DB Schema
 

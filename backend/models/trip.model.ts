@@ -56,6 +56,7 @@ const ChecklistItemSchema = new Schema(
         text: { type: String, required: true },
         done: { type: Boolean, default: false },
         assignedTo: { type: String, default: "" },
+        category: { type: String, default: "General" },
     },
     { _id: true }
 );
@@ -68,6 +69,7 @@ const TripFileSchema = new Schema(
         format: { type: String, default: "" },
         bytes: { type: Number, default: 0 },
         resourceType: { type: String, enum: ["image", "raw", "video"], default: "raw" },
+        documentCategory: { type: String, enum: ["flight", "hotel", "insurance", "car", "general"], default: "general" },
         width: { type: Number },
         height: { type: Number },
         uploadedBy: { type: String, default: "" },
@@ -117,6 +119,7 @@ export interface ITrip extends Document {
         _id?: string;
         text: string;
         done: boolean;
+        category?: string;
     }[];
     files: {
         _id?: string;
@@ -126,10 +129,12 @@ export interface ITrip extends Document {
         format?: string;
         bytes?: number;
         resourceType?: "image" | "raw" | "video";
+        documentCategory?: "flight" | "hotel" | "insurance" | "car" | "general";
         width?: number;
         height?: number;
         uploadedBy?: string;
         uploadedByName?: string;
+        createdAt?: Date;
     }[];
     inviteCode: string;
     isDemo: boolean;

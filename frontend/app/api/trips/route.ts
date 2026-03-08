@@ -85,10 +85,12 @@ export async function GET() {
                     { name: "Scuba Gear", amount: 7000, category: "Adventure", paidBy: "demo_rahul", paidByName: "Rahul Sharma", date: new Date() },
                 ],
                 checklist: [
-                    { text: "Swimwear", done: true }, { text: "Sunscreen", done: true },
-                    { text: "Powerbank", done: false }, { text: "Camera", done: false },
+                    { text: "Swimwear", done: true, category: "Clothing" },
+                    { text: "Sunscreen", done: true, category: "Toiletries" },
+                    { text: "Powerbank", done: false, category: "Electronics" },
+                    { text: "Camera", done: false, category: "Electronics" },
                 ],
-            };
+            } as any;
 
             const manaliData = {
                 title: "Manali Adventure",
@@ -153,10 +155,24 @@ export async function GET() {
                     { name: "Cab to Rohtang", amount: 4000, category: "Transport", paidBy: "demo_vikram", paidByName: "Vikram Singh", date: new Date() },
                 ],
                 checklist: [
-                    { text: "Thermal wear", done: true }, { text: "Boots", done: true },
-                    { text: "Gloves", done: false }, { text: "Raincoat", done: false },
+                    { text: "Thermal wear", done: true, category: "Clothing" },
+                    { text: "Boots", done: true, category: "Clothing" },
+                    { text: "Gloves", done: false, category: "Clothing" },
+                    { text: "Raincoat", done: false, category: "Clothing" },
+                    { text: "Painkillers", done: true, category: "Medical" },
+                    { text: "Bandages", done: false, category: "Medical" },
                 ],
-            };
+            } as any;
+
+            goaData.files = [
+                { name: "Flight_BOM_GOI.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", bytes: 1450000, documentCategory: "flight", uploadedBy: userId, uploadedByName: userName, createdAt: new Date("2026-02-10") },
+                { name: "W_Goa_Confirmation.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", bytes: 2300000, documentCategory: "hotel", uploadedBy: userId, uploadedByName: userName, createdAt: new Date("2026-02-12") },
+            ];
+
+            manaliData.files = [
+                { name: "Volvo_Bus_Tickets.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", bytes: 850000, documentCategory: "car", uploadedBy: "demo_vikram", uploadedByName: "Vikram Singh", createdAt: new Date("2026-03-01") },
+                { name: "Himalayan_Insurance.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", bytes: 420000, documentCategory: "insurance", uploadedBy: userId, uploadedByName: userName, createdAt: new Date("2026-03-05") }
+            ];
 
             try {
                 await Promise.all([

@@ -40,6 +40,7 @@ import {
     Ticket,
     Eye,
     EyeOff,
+    ListChecks,
 } from "lucide-react";
 import { Button } from "@frontend/ui/ui/button";
 import { Badge } from "@frontend/ui/ui/badge";
@@ -357,7 +358,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     interface Activity { _id: string; title: string; time: string; location: string; notes: string; cost: number; category: string; }
     interface Day { label: string; date: string; activities: Activity[]; }
     interface Expense { _id: string; name: string; category: string; amount: number; paidBy: string; paidByName: string; date: string; }
-    interface ChecklistItem { _id: string; text: string; done: boolean; }
+    interface ChecklistItem { _id?: string; text: string; done: boolean; category?: string; }
     interface TripFile {
         _id: string;
         name: string;
@@ -366,6 +367,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
         format?: string;
         bytes?: number;
         resourceType?: "image" | "raw" | "video";
+        documentCategory?: "flight" | "hotel" | "insurance" | "car" | "general";
         width?: number;
         height?: number;
         uploadedByName: string;
@@ -383,9 +385,16 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
     const [days, setDays] = useState<Day[]>([]);
     const [budgetData, setBudgetData] = useState<Expense[]>([]);
     const [checklists, setChecklists] = useState<ChecklistItem[]>([]);
-    const [newChecklistItem, setNewChecklistItem] = useState("");
+    const [newChecklistItems, setNewChecklistItems] = useState<Record<string, string>>({});
+    const [newCategoryName, setNewCategoryName] = useState("");
     const [files, setFiles] = useState<TripFile[]>([]);
+
+    // File Upload Dialog State
     const [uploading, setUploading] = useState(false);
+    const [isFileModalOpen, setIsFileModalOpen] = useState(false);
+    const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<"flight" | "hotel" | "insurance" | "car" | "general">("general");
+
     const router = useRouter();
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://travio.fun").replace(/\/$/, "");
 
@@ -452,13 +461,24 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
         await saveTrip({ days: newDays });
     };
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !user) return;
 
+        setFileToUpload(file);
+        setIsFileModalOpen(true);
+        // Reset input value so same file can be selected again if needed
+        e.target.value = "";
+    };
+
+    const confirmFileUpload = async () => {
+        if (!fileToUpload || !user) return;
+
         setUploading(true);
+        setIsFileModalOpen(false);
+
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", fileToUpload);
 
         try {
             const res = await fetch("/api/upload", { method: "POST", body: formData });
@@ -472,10 +492,12 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                     format: data.format,
                     bytes: data.bytes,
                     resourceType: data.resourceType,
+                    documentCategory: selectedCategory,
                     width: data.width,
                     height: data.height,
                     uploadedBy: user.id || "userId",
                     uploadedByName: user.fullName || user.firstName || "You",
+                    createdAt: new Date().toISOString()
                 };
                 const updated = [...files, newFile];
                 setFiles(updated);
@@ -488,7 +510,8 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
             alert("File upload failed. Ensure CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET are set.");
         } finally {
             setUploading(false);
-            e.target.value = "";
+            setFileToUpload(null);
+            setSelectedCategory("general");
         }
     };
 
@@ -547,14 +570,32 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
         await saveTrip({ checklist: updated });
     };
 
-    const addChecklist = async () => {
-        if (!newChecklistItem) return;
-        const newItem = { text: newChecklistItem, done: false };
+    const addChecklist = async (category: string) => {
+        const text = newChecklistItems[category];
+        if (!text) return;
+        const newItem = { text, done: false, category };
         const updated = [...checklists, newItem as any];
         setChecklists(updated);
-        setNewChecklistItem("");
+        setNewChecklistItems(prev => ({ ...prev, [category]: "" }));
         await saveTrip({ checklist: updated });
         fetchTrip(); // Get back with IDs
+    };
+
+    const addNewCategory = async () => {
+        if (!newCategoryName) return; // Add a dummy item to save the category
+        const newItem = { text: "New Item", done: false, category: newCategoryName };
+        const updated = [...checklists, newItem as any];
+        setChecklists(updated);
+        setNewCategoryName("");
+        await saveTrip({ checklist: updated });
+        fetchTrip();
+    };
+
+    const deleteChecklistCategory = async (category: string) => {
+        if (!window.confirm("Are you sure you want to delete this entire list?")) return;
+        const updated = checklists.filter(c => c.category !== category);
+        setChecklists(updated);
+        await saveTrip({ checklist: updated });
     };
 
     const deleteExpense = async (id: string) => {
@@ -1306,136 +1347,315 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                     </TabsContent>
 
                     {/* CHECKLISTS TAB */}
-                    <TabsContent value="checklists" className="mt-4 outline-none">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
-                                <div className="flex justify-between items-center mb-6">
-                                    <div>
-                                        <h3 className="font-medium text-slate-900 text-lg">Packing List</h3>
-                                        <p className="text-sm text-slate-500 font-medium mt-0.5">{checklists.filter(c => c.done).length}/{checklists.length} completed</p>
-                                    </div>
-                                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-800"><MoreHorizontal className="h-5 w-5" /></Button>
-                                </div>
+                    <TabsContent value="checklists" className="mt-6 outline-none">
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[900px] mx-auto px-4 md:px-0 mt-8">
 
-                                <div className="space-y-4">
-                                    {checklists.map((item: ChecklistItem, idx) => (
-                                        <div key={item._id || idx} className="flex items-center justify-between group">
-                                            <div className="flex items-center space-x-3">
-                                                <Checkbox
-                                                    id={`pack-${item._id}`}
-                                                    checked={item.done}
-                                                    onCheckedChange={() => canEdit && toggleChecklist(item._id)}
-                                                    disabled={!canEdit}
-                                                    className="h-5 w-5 rounded-md border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                                />
-                                                <label htmlFor={`pack-${item._id}`} className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer", item.done ? "text-slate-400 line-through" : "text-slate-700")}>
-                                                    {item.text}
-                                                </label>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h3 className="text-[24px] font-bold text-slate-800 tracking-tight" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                        Packing & To-Do Lists
+                                    </h3>
+                                    <p className="text-slate-500 font-medium text-[15px] mt-1" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                        Organize everything you need to bring or do before the trip.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {Array.from(new Set(checklists.map(c => c.category || "General"))).map((categoryName) => {
+                                    const categoryItems = checklists.filter(c => (c.category || "General") === categoryName);
+                                    const completedCount = categoryItems.filter(c => c.done).length;
+                                    const totalCount = categoryItems.length;
+
+                                    return (
+                                        <div key={categoryName} className="bg-white border border-slate-100 rounded-[24px] shadow-[0_8px_30px_-12px_rgba(0,0,0,0.06)] p-6 sm:p-8 flex flex-col h-full relative overflow-hidden group/card">
+                                            {/* Top decorative gradient bar */}
+                                            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#0066FF] to-blue-300 opacity-80" />
+
+                                            <div className="flex justify-between items-start mb-6 mt-1">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1.5">
+                                                        <div className="bg-blue-50 p-2 rounded-xl text-[#0066FF]">
+                                                            <CheckCircle2 className="h-5 w-5" />
+                                                        </div>
+                                                        <h3 className="font-bold text-slate-800 text-[20px]" style={{ fontFamily: "'Quicksand', sans-serif" }}>{categoryName}</h3>
+                                                    </div>
+                                                    <p className="text-[13px] text-slate-500 font-bold tracking-wide" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                        {completedCount} / {totalCount} ITEMS COMPLETED
+                                                    </p>
+                                                </div>
+                                                {canEdit && (
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-800 rounded-full h-9 w-9 bg-slate-50 hover:bg-slate-100">
+                                                                <MoreHorizontal className="h-5 w-5" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-48 rounded-xl" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                            <DropdownMenuItem onClick={() => deleteChecklistCategory(categoryName)} className="text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer font-bold text-[14px]">
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete List
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                )}
                                             </div>
+
+                                            {/* Progress Bar */}
+                                            <div className="w-full bg-slate-100 rounded-full h-2 mb-6 overflow-hidden">
+                                                <div
+                                                    className="bg-[#0066FF] h-2 rounded-full transition-all duration-700 ease-in-out"
+                                                    style={{ width: `${totalCount === 0 ? 0 : (completedCount / totalCount) * 100}%` }}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-[220px]">
+                                                {categoryItems.map((item: ChecklistItem, idx) => (
+                                                    <div key={item._id || idx} className="flex items-center justify-between group p-3.5 rounded-2xl hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                                                        <div className="flex items-center space-x-4">
+                                                            <Checkbox
+                                                                id={`pack-${item._id}`}
+                                                                checked={item.done}
+                                                                onCheckedChange={() => canEdit && toggleChecklist(item._id!)}
+                                                                disabled={!canEdit}
+                                                                className="h-[24px] w-[24px] rounded-[6px] border-slate-200 data-[state=checked]:bg-[#0066FF] data-[state=checked]:border-[#0066FF] shadow-sm transition-all"
+                                                            />
+                                                            <label htmlFor={`pack-${item._id}`} className={cn("text-[15px] font-bold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer pt-0.5", item.done ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700")} style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                                {item.text}
+                                                            </label>
+                                                        </div>
+                                                        {canEdit && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={async () => {
+                                                                    const updated = checklists.filter(c => c._id !== item._id);
+                                                                    setChecklists(updated);
+                                                                    await saveTrip({ checklist: updated });
+                                                                }}
+                                                                className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all pointer-events-auto"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                ))}
+
+                                                {categoryItems.length === 0 && (
+                                                    <div className="text-center py-10 flex flex-col items-center">
+                                                        <div className="bg-slate-50 p-4 rounded-full mb-3">
+                                                            <ListChecks className="h-6 w-6 text-slate-300" />
+                                                        </div>
+                                                        <p className="text-slate-400 font-medium text-sm" style={{ fontFamily: "'Quicksand', sans-serif" }}>Your list is empty.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
                                             {canEdit && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={async () => {
-                                                        const updated = checklists.filter(c => c._id !== item._id);
-                                                        setChecklists(updated);
-                                                        await saveTrip({ checklist: updated });
-                                                    }}
-                                                    className="h-8 w-8 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
+                                                <div className="mt-6 pt-5 border-t border-slate-100/80 flex gap-3 relative">
+                                                    <div className="absolute left-4 top-[35px] text-slate-400 pointer-events-none">
+                                                        <Plus className="h-5 w-5" />
+                                                    </div>
+                                                    <Input
+                                                        value={newChecklistItems[categoryName] || ""}
+                                                        onChange={(e) => setNewChecklistItems(prev => ({ ...prev, [categoryName]: e.target.value }))}
+                                                        onKeyDown={(e) => e.key === 'Enter' && addChecklist(categoryName)}
+                                                        placeholder="Add new item..."
+                                                        className="rounded-2xl border-slate-200 h-12 pl-11 focus-visible:ring-[#0066FF]/20 focus-visible:border-[#0066FF]/40 text-[15px] font-bold shadow-sm bg-slate-50/50 hover:bg-white transition-colors w-full"
+                                                        style={{ fontFamily: "'Quicksand', sans-serif" }}
+                                                    />
+                                                    <Button
+                                                        onClick={() => addChecklist(categoryName)}
+                                                        className="rounded-2xl px-6 shrink-0 bg-[#0066FF] hover:bg-[#0066FF]/90 text-white font-bold h-12 shadow-[0_4px_12px_-4px_rgba(0,102,255,0.4)] transition-all text-[15px]"
+                                                        style={{ fontFamily: "'Quicksand', sans-serif" }}
+                                                    >
+                                                        Add
+                                                    </Button>
+                                                </div>
                                             )}
                                         </div>
-                                    ))}
-                                </div>
+                                    );
+                                })}
+
+                                {/* Create New List Button / Container */}
                                 {canEdit && (
-                                    <div className="mt-6 flex gap-2">
-                                        <Input value={newChecklistItem} onChange={(e) => setNewChecklistItem(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addChecklist()} placeholder="Add a new item..." className="rounded-xl border-slate-200 focus-visible:ring-primary/20" />
-                                        <Button onClick={addChecklist} className="rounded-xl px-4 shrink-0 bg-primary hover:bg-blue-600 text-white font-semibold">Add</Button>
+                                    <div
+                                        className="bg-[#FAFAFA] border-2 border-slate-200 border-dashed rounded-[24px] p-8 flex flex-col items-center justify-center text-center h-full min-h-[420px] hover:border-[#0066FF]/40 hover:bg-blue-50/50 transition-all group cursor-pointer relative"
+                                        onClick={() => document.getElementById('newListInput')?.focus()}
+                                    >
+                                        <div className="h-16 w-16 bg-white shadow-sm border border-slate-100 text-[#0066FF] rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                                            <Plus className="h-8 w-8" />
+                                        </div>
+                                        <h3 className="font-bold text-slate-800 text-[20px] mb-2" style={{ fontFamily: "'Quicksand', sans-serif" }}>Create new list</h3>
+                                        <p className="text-slate-500 font-medium text-[15px] mb-8 max-w-[240px]" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                            Tasks, shopping, or groceries? Keep everything perfectly organized.
+                                        </p>
+
+                                        <div className="flex flex-col gap-3 w-full max-w-[300px] z-10 transition-all">
+                                            <Input
+                                                id="newListInput"
+                                                value={newCategoryName}
+                                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && addNewCategory()}
+                                                placeholder="e.g. Toiletries, Documents..."
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="rounded-2xl border-slate-200 h-12 text-[15px] font-bold shadow-sm bg-white focus-visible:ring-[#0066FF]/20"
+                                                style={{ fontFamily: "'Quicksand', sans-serif" }}
+                                            />
+                                            <Button
+                                                onClick={(e) => { e.stopPropagation(); addNewCategory(); }}
+                                                disabled={!newCategoryName}
+                                                className="rounded-2xl h-12 w-full bg-[#0066FF] hover:bg-[#0066FF]/90 font-bold shadow-[0_4px_12px_-4px_rgba(0,102,255,0.4)] text-white text-[15px]"
+                                                style={{ fontFamily: "'Quicksand', sans-serif" }}
+                                            >
+                                                Create List
+                                            </Button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
-
-                            {canEdit && (
-                                <div className="bg-white border border-slate-200 border-dashed rounded-2xl shadow-sm p-8 flex flex-col items-center justify-center text-center min-h-[300px] hover:border-primary/50 hover:bg-blue-50/30 transition-colors group cursor-pointer" onClick={() => document.getElementById('newListInput')?.focus()}>
-                                    <div className="h-14 w-14 bg-blue-50 group-hover:bg-blue-100 text-primary rounded-full flex items-center justify-center mb-4 transition-colors">
-                                        <CheckCircle2 className="h-7 w-7" />
-                                    </div>
-                                    <h3 className="font-medium text-slate-900 text-lg mb-2">Create new list</h3>
-                                    <p className="text-slate-500 text-sm mb-6 max-w-[200px]">Tasks, shopping, or groceries? Keep everything organized.</p>
-                                    <div className="flex gap-2 w-full max-w-[240px] opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Input id="newListInput" placeholder="List name..." onClick={(e) => e.stopPropagation()} className="rounded-xl border-slate-200 h-9" />
-                                        <Button size="sm" onClick={(e) => { e.stopPropagation(); }} className="rounded-xl shrink-0 h-9">Create</Button>
-                                    </div>
-                                    <Button className="rounded-xl mt-4 group-hover:hidden transition-all"><Plus className="h-4 w-4 mr-2" /> New List</Button>
-                                </div>
-                            )}
                         </div>
                     </TabsContent>
 
-                    {/* FILES TAB */}
-                    <TabsContent value="files" className="mt-4 outline-none">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div className="md:col-span-1">
-                                {canEdit && (
-                                    <label className="bg-white border-2 border-dashed border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col items-center justify-center text-center min-h-[250px] hover:bg-blue-50/50 hover:border-primary/40 transition-colors cursor-pointer group">
-                                        <div className="h-12 w-12 bg-slate-100 group-hover:bg-blue-100/50 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-slate-600 group-hover:text-[#3b82f6]">
-                                            {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <UploadCloud className="h-6 w-6" />}
-                                        </div>
-                                        <h3 className="font-semibold text-slate-900 text-sm mb-1 group-hover:text-[#3b82f6] transition-colors">{uploading ? "Uploading..." : "Upload File"}</h3>
-                                        <p className="text-slate-500 text-xs mb-4">PDF, JPG, PNG (Max 10MB)</p>
-                                        <span className="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-xs font-semibold h-8 px-3 border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground w-full">Browse Files</span>
-                                        <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
-                                    </label>
-                                )}
-                            </div>
+                    {/* FILES TAB (FIGMA MATCH) */}
+                    <TabsContent value="files" className="mt-6 outline-none">
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[900px] mx-auto px-4 md:px-0 mt-8">
 
-                            <div className="md:col-span-3">
-                                {files.length === 0 ? (
-                                    <div className="bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl p-12 text-center">
-                                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                                            <Paperclip className="h-8 w-8 text-slate-300" />
-                                        </div>
-                                        <h3 className="text-slate-900 font-bold text-[16px]" style={{ fontFamily: "'Quicksand', sans-serif" }}>No files uploaded yet</h3>
-                                        <p className="text-slate-500 text-[13px] mt-1" style={{ fontFamily: "'Quicksand', sans-serif" }}>Store your tickets, bookings, and IDs in one place.</p>
+                            {/* Ticket-style Upload Dropzone */}
+                            {canEdit && (
+                                <label className="bg-[#FAFAFA] border-2 border-dashed border-slate-200 rounded-[12px] p-8 flex flex-col items-center justify-center text-center hover:border-[#0066FF]/40 hover:bg-blue-50/50 transition-all cursor-pointer group shadow-sm mx-auto">
+                                    <div className="h-14 w-14 bg-white border border-slate-100 shadow-sm group-hover:scale-110 rounded-[14px] flex items-center justify-center mb-4 transition-transform duration-300 text-[#0066FF] group-hover:text-[#0066FF]">
+                                        {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <UploadCloud className="h-6 w-6" />}
                                     </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {files.map((file) => (
-                                            <div key={file._id} className="bg-white border border-slate-200 rounded-2xl p-4 flex gap-4 items-center group hover:shadow-sm transition-all">
-                                                <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden", isImageFile(file) ? "bg-slate-100" : "bg-blue-50 text-[#3b82f6]")}>
-                                                    {isImageFile(file) ? (
-                                                        <div className="relative h-full w-full">
-                                                            <Image
-                                                                src={normalizeRemoteImage(file.url, 120, 68)}
-                                                                className="object-cover"
-                                                                alt={file.name}
-                                                                fill
-                                                                sizes={THUMBNAIL_IMAGE_SIZES}
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        <FileText className="h-6 w-6" />
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-semibold text-slate-900 text-sm truncate">{file.name}</h4>
-                                                    <p className="text-xs text-slate-500 mt-0.5">{(file.bytes! / 1024 / 1024).toFixed(1)} MB • Added by {file.uploadedByName || "User"}</p>
-                                                </div>
-                                                <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-slate-500 hover:text-slate-900">
-                                                        <a href={file.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
-                                                    </Button>
+                                    <h3 className="font-bold text-slate-800 text-[18px] mb-1" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                        {uploading ? "Uploading..." : "Click or drag to upload files"}
+                                    </h3>
+                                    <p className="text-slate-500 font-medium text-[14px]" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                        Supports PDF, JPG, PNG (Max 10MB per file)
+                                    </p>
+                                    <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+                                </label>
+                            )}
+
+                            {/* Dialog for selecting category BEFORE uploading */}
+                            <Dialog open={isFileModalOpen} onOpenChange={setIsFileModalOpen}>
+                                <DialogContent className="sm:max-w-[400px] rounded-[24px] p-8" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                    <DialogHeader>
+                                        <DialogTitle className="text-2xl font-bold text-slate-800 mx-auto">Select Document Type</DialogTitle>
+                                        <DialogDescription className="text-center text-slate-500 text-[15px] pt-1">
+                                            What kind of document is this?
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                        <select
+                                            value={selectedCategory}
+                                            onChange={(e: any) => setSelectedCategory(e.target.value)}
+                                            className="w-full h-12 rounded-xl border border-slate-200 bg-white px-3 text-[15px] font-medium text-slate-700 outline-none focus:ring-2 focus:ring-[#0066FF]/20"
+                                        >
+                                            <option value="flight">✈️ Flight Tickets</option>
+                                            <option value="hotel">🏨 Hotel Confirmation</option>
+                                            <option value="insurance">🛡️ Travel Insurance</option>
+                                            <option value="car">🚗 Car Rental Info</option>
+                                            <option value="general">📄 General Document</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex gap-3 mt-4 w-full">
+                                        <Button variant="outline" className="flex-1 rounded-xl h-11 text-slate-500 font-bold border-slate-200" onClick={() => setIsFileModalOpen(false)}>Cancel</Button>
+                                        <Button onClick={confirmFileUpload} disabled={!fileToUpload} className="flex-1 rounded-xl h-11 bg-[#0066FF] hover:bg-[#0066FF]/90 text-white font-bold transition-colors shadow-sm">
+                                            Upload
+                                        </Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+
+                            {/* Files Grid (Ticket Cards) */}
+                            {files.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <p className="text-slate-400 font-medium" style={{ fontFamily: "'Quicksand', sans-serif" }}>No files uploaded yet.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {files.map((file) => {
+                                        const type = file.documentCategory || "general";
+                                        let icon = <FileText className="h-5 w-5" />;
+                                        let iconBg = "bg-[#F3F4F6] text-[#6B7280]";
+                                        let title = "General Document";
+
+                                        if (type === "flight") {
+                                            icon = <PlaneTakeoff className="h-6 w-6" />;
+                                            iconBg = "bg-[#E5F0FF] text-[#0066FF]";
+                                            title = "Flight Tickets";
+                                        } else if (type === "hotel") {
+                                            icon = <Home className="h-6 w-6" />;
+                                            iconBg = "bg-[#E5F0FF] text-[#1F75FF]";
+                                            title = "Hotel Confirmation";
+                                        } else if (type === "insurance") {
+                                            icon = <CheckCircle2 className="h-6 w-6" />;
+                                            iconBg = "bg-[#E5F7ED] text-[#00A84D]";
+                                            title = "Travel Insurance";
+                                        } else if (type === "car") {
+                                            icon = <Car className="h-6 w-6" />;
+                                            iconBg = "bg-[#F3F4F6] text-[#6B7280]";
+                                            title = "Car Rental Info";
+                                        }
+
+                                        return (
+                                            <div key={file._id} className="relative bg-white rounded-[16px] p-6 flex flex-col shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden group">
+
+                                                {/* Left/Right Cutouts to look like a ticket */}
+                                                <div className="absolute left-[-8px] top-1/2 -translate-y-1/2 w-4 h-8 bg-[#FAFAFA] rounded-r-full"></div>
+                                                <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 w-4 h-8 bg-[#FAFAFA] rounded-l-full"></div>
+
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className={cn("h-14 w-14 rounded-[14px] flex items-center justify-center", iconBg)}>
+                                                        {icon}
+                                                    </div>
                                                     {canEdit && (
-                                                        <Button variant="ghost" size="icon" onClick={() => deleteFile(file._id)} className="h-8 w-8 text-red-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-slate-600 rounded-full">
+                                                                    <MoreHorizontal className="h-5 w-5" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-slate-100 min-w-[140px] font-medium" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                                {isImageFile(file) && (
+                                                                    <DropdownMenuItem asChild>
+                                                                        <a href={file.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-slate-700 py-2"><Eye className="h-4 w-4 mr-2 text-slate-400" /> Preview</a>
+                                                                    </DropdownMenuItem>
+                                                                )}
+                                                                <DropdownMenuItem onClick={() => deleteFile(file._id)} className="cursor-pointer text-red-500 hover:text-red-600 focus:text-red-500 py-2">
+                                                                    <Trash2 className="h-4 w-4 mr-2" /> Delete File
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     )}
+                                                </div>
+
+                                                <div className="mb-6">
+                                                    <h4 className="font-bold text-slate-800 text-[17px]" style={{ fontFamily: "'Quicksand', sans-serif" }}>{title}</h4>
+                                                    <p className="text-[13px] font-medium text-slate-400 mt-1 uppercase tracking-wide truncate" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                        {file.name}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 border-dashed">
+                                                    <span className="text-[12px] font-semibold text-slate-400" style={{ fontFamily: "'Quicksand', sans-serif" }}>
+                                                        Added {format(new Date(file.createdAt || new Date()), "MMM dd, yyyy")}
+                                                    </span>
+                                                    <a
+                                                        href={file.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[13px] font-bold text-[#0066FF] hover:text-[#0066FF]/80 flex items-center gap-1.5 transition-colors"
+                                                        style={{ fontFamily: "'Quicksand', sans-serif" }}
+                                                    >
+                                                        Download <Download className="h-3.5 w-3.5" />
+                                                    </a>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </TabsContent>
 
@@ -1485,22 +1705,44 @@ export default function TripDetailPage({ params }: { params: Promise<{ tripId: s
                                                     </div>
                                                     <div className="mx-auto w-56 h-56 bg-white rounded-3xl p-4 border border-slate-100 shadow-sm flex items-center justify-center relative">
                                                         <Image
-                                                            src={normalizeRemoteImage(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${appUrl}/join/${trip?.inviteCode || ""}`)}&color=0f172a&bgcolor=ffffff&qzone=1`, 400, 80)}
+                                                            src={normalizeRemoteImage(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&data=${encodeURIComponent(`${appUrl}/join/${trip?.inviteCode || ""}`)}&color=0f172a&bgcolor=ffffff&qzone=1`, 400, 80)}
                                                             alt="QR"
                                                             width={224}
                                                             height={224}
                                                             sizes="224px"
                                                             className="h-full w-full"
+                                                            unoptimized
                                                         />
                                                         {/* Premium Logo inside QR */}
-                                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[52px] h-[52px] bg-white rounded-[14px] flex items-center justify-center shadow-sm border-[3px] border-white p-1.5">
+                                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40px] h-[40px] bg-white rounded-[10px] flex items-center justify-center shadow-sm border-[3px] border-white p-1 pointer-events-none">
                                                             <div className="relative h-full w-full">
                                                                 <Image src="/icon.svg" alt="Travio Logo" fill className="object-contain" />
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <Button className="w-full h-14 rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white font-bold text-[15px] shadow-sm transition-all" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                                                        <Download className="h-5 w-5 mr-2" /> Download Link Map
+                                                    <Button
+                                                        onClick={async () => {
+                                                            try {
+                                                                const qrUrl = normalizeRemoteImage(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&data=${encodeURIComponent(`${appUrl}/join/${trip?.inviteCode || ""}`)}&color=0f172a&bgcolor=ffffff&qzone=1`, 400, 80);
+                                                                const response = await fetch(qrUrl);
+                                                                if (!response.ok) throw new Error("Network response was not ok");
+                                                                const blob = await response.blob();
+                                                                const url = window.URL.createObjectURL(blob);
+                                                                const link = document.createElement("a");
+                                                                link.href = url;
+                                                                link.download = `invite-qr-${trip?.title?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || "trip"}.png`;
+                                                                document.body.appendChild(link);
+                                                                link.click();
+                                                                document.body.removeChild(link);
+                                                                window.URL.revokeObjectURL(url);
+                                                            } catch (error) {
+                                                                console.error("Failed to download QR", error);
+                                                            }
+                                                        }}
+                                                        className="w-full h-14 rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white font-bold text-[15px] shadow-sm transition-all"
+                                                        style={{ fontFamily: "'Quicksand', sans-serif" }}
+                                                    >
+                                                        <Download className="h-5 w-5 mr-2" /> Download QR Code
                                                     </Button>
                                                 </div>
                                             </DialogContent>

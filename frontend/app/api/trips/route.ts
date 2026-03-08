@@ -22,9 +22,13 @@ export async function GET() {
 
     // Auto-seed for new demo accounts directly in the GET request 
     // Saves a network roundtrip and ensures data is always available instantly
-    if (trips.length === 0) {
-        const user = await currentUser();
-        if (user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com") {
+    const user = await currentUser();
+    const isDemoUser = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === "demo@travio.com";
+
+    if (isDemoUser) {
+        const hasDemoTrips = trips.some((t: any) => t.isDemo);
+
+        if (!hasDemoTrips) {
             const userName = user.fullName || user.firstName || "Traveler";
             const userAvatar = user.imageUrl || "";
             const userEmail = user.primaryEmailAddress?.emailAddress || "";

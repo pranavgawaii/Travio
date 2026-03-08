@@ -177,9 +177,12 @@ export async function GET() {
         ];
 
         try {
-            // Wipe any stale records (wrong ownerId, missing isDemo, etc.) then recreate fresh
-            await Trip.deleteMany({ inviteCode: { $in: ["GOA2026", "MANALI26"] } });
-            await Trip.insertMany([goaData, manaliData], { ordered: false });
+            // Use updateOne with upsert to maintain stable IDs. 
+            // If we find them by inviteCode, we patch them with current data and ownerId.
+            await Promise.all([
+                Trip.updateOne({ inviteCode: "GOA2026" }, { $set: { ...goaData, ownerId: userId } }, { upsert: true }),
+                Trip.updateOne({ inviteCode: "MANALI26" }, { $set: { ...manaliData, ownerId: userId } }, { upsert: true }),
+            ]);
         } catch (seedErr) {
             console.error("Demo seed error:", seedErr);
         }

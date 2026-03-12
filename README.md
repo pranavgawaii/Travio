@@ -1,228 +1,147 @@
 <div align="center">
 
-# Travio
-**Collaborative Trip Planning, Reimagined.**
+<img src="frontend/public/hero-section.png" alt="Travio Banner" width="100%" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
 
-*A submission for the Web Dev Cohort 2026 Buildathon — Problem Statement 3.*
+# 🌏 Travio
+### Collaborative Trip Planning, Reimagined.
 
-<br/>
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-<img src="frontend/public/hero-section.png" alt="Travio Landing Page" style="border-radius: 12px; border: 1px solid #333;" />
+[**Live Demo**](https://travio.fun) • [**Watch Walkthrough**](https://youtu.be/lZED4XvoGQ0) • [**Documentation**](https://github.com/pranavgawaii/Travio#readme)
+
 </div>
 
 <br/>
 
-## 🔗 Live Links
+## 📖 Overview
 
-🌍 Live Website: https://travio.fun  
-🎥 Demo Video: https://youtu.be/lZED4XvoGQ0  
-📂 Repository: https://github.com/pranavgawaii/Travio
+**Travio** is a high-performance, real-time collaborative platform engineered to eliminate the chaos of group travel planning. Unlike fragmented messaging threads or static spreadsheets, Travio provides a unified, premium workspace where travelers can co-create itineraries, manage shared expenses, and organize trip essentials in one cohesive dashboard.
 
-<br/>
-
-## 🌍 Project Overview
-
-**Travio** is a full-stack, real-time collaborative platform designed to orchestrate group travel without the friction. Built entirely from scratch to address **Problem Statement 3**, Travio shifts group trip planning away from disorganized WhatsApp chats and Google Sheets into a single, cohesive, premium dashboard. 
-
-Travio maps exactly to the real-world workflow of modern travelers—managing complex states across day-wise itineraries, split budgets, checklist ownership, and role-based permissions simultaneously.
+Designed with a focus on **Visual Excellence** and **Seamless Interaction**, Travio bridges the gap between digital planning and real-world travel workflows.
 
 ---
 
-## 🎥 Product Demo
+## ✨ Key Features
 
-Watch a quick walkthrough of Travio and its core workflows.
+### 🗓️ Smart Itinerary Builder
+- **Dynamic Scheduling:** Build day-wise plans that automatically adjust to your trip duration.
+- **Rich Activity Cards:** Categorize activities with precise timing, location data, and cost estimates.
+- **Drag-and-Drop UX:** Intuitively reorder your day to optimize your travel flow.
 
-https://youtu.be/lZED4XvoGQ0
+### 👥 Real-Time Collaboration
+- **Invite Engine:** Instant member onboarding via unique invite codes.
+- **Role-Based Permissions (RBAC):** Granular access control for `Owners`, `Editors`, and `Viewers`.
+- **Live State Sync:** Seamless updates across all participants using optimized React hydration patterns.
+
+### 💰 Financial Intelligence
+- **Global Expense Ledger:** Track who paid what and visualize total trip costs automatically.
+- **Categorized Spending:** Understand where your budget is going with insightful summaries.
+
+### 🎒 Essential Organization
+- **Smart Checklists:** Real-time to-do and packing lists to ensure nothing is left behind.
+- **Document Vault:** Securely attach digital tickets, PDFs, and confirmations via Cloudinary storage.
 
 ---
 
-## ✨ Features Implemented 
+## 🛠️ Tech Stack
 
-### 📌 Trip Planning
-- **Create Trip Workspace:** Users can instantiate trips with titles, dates, destinations, and a designated owner.
-- **Day-Wise Itinerary Builder:** Dynamic scheduling of days based on the trip's start and end date.
-- **Activity Cards:** Embedded activities per day, complete with timing, location mapping, cost assignment, and categorization.
-- **Dynamic Reordering:** Intuitive logic mapping for sorting activities sequentially across a given day.
+Designed using a modern, scalable architecture:
 
-### 🤝 Collaboration
-- **Invite Engine:** Seamlessly invite members via unique, instantly generated `inviteCodes`.
-- **Role-Based Access Control (RBAC):** Strict authorization logic determining action capabilities for `Owner`, `Editor`, and `Viewer`.
+- **Frontend:** [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/)
+- **State & Animation:** [Framer Motion](https://www.framer.com/motion/), [Radix UI](https://www.radix-ui.com/)
+- **Backend:** Next.js Serverless Functions, [Node.js](https://nodejs.org/)
+- **Database:** [MongoDB Atlas](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/)
+- **Authentication:** [Clerk](https://clerk.com/) (Edge Middleware Auth)
+- **Infrastructure:** [Vercel](https://vercel.com/) (CI/CD), [Cloudinary](https://cloudinary.com/) (Media Hosting)
 
-### 🗂️ Organization & Financials
-- **Budget Tracking & Expense Summary:** A global financial ledger tracking categorical expenses, defining "who paid what", and aggregating the trip's total cost.
-- **Checklist Engine:** Real-time state management for packing and to-do lists to ensure no traveler forgets the essentials.
-- **File Attachments:** Central vault for digital tickets, PDFs, and reservation confirmations via cloud storage.
+---
 
-<br/>
+## 🧬 System Architecture
 
-## 🧬 System Architecture & DB Schema
-
-Travio utilizes a customized Model-View-Controller (MVC) serverless pattern. The backend routes act as microservices hosted on Next.js Edge infrastructure communicating natively with a **MongoDB** document instance.
-
-### Database Schema (Entity Relationship)
+Travio follows a serverless MVC pattern optimized for low-latency interactions at the edge.
 
 ```mermaid
 erDiagram
-    USER ||--o{ TRIP : "owns / participates"
-    TRIP ||--|{ MEMBER : "has"
-    TRIP ||--|{ DAY : "contains"
-    TRIP ||--o{ EXPENSE : "tracks"
-    TRIP ||--o{ CHECKLIST_ITEM : "requires"
-    TRIP ||--o{ FILE : "stores"
+    USER ||--o{ TRIP : "manages"
+    TRIP ||--|{ MEMBER : "contains"
+    TRIP ||--|{ DAY : "includes"
+    TRIP ||--o{ EXPENSE : "monitors"
+    TRIP ||--o{ CHECKLIST_ITEM : "tracks"
+    TRIP ||--o{ FILE : "hosts"
 
     TRIP {
-        ObjectId _id
+        ObjectId id
         String title
         String destination
         Date startDate
         Date endDate
-        String ownerId
         String inviteCode
     }
 
     MEMBER {
         String userId
-        String name
-        String role "owner, editor, viewer"
+        String role "owner | editor | viewer"
     }
 
     DAY {
-        String label
         Date date
         Activity[] activities
     }
-
-    ACTIVITY {
-        String title
-        String time
-        String location
-        Number cost
-        String category
-    }
-
-    EXPENSE {
-        String name
-        Number amount
-        String paidBy
-        Date date
-    }
 ```
 
 ---
 
-## 🛠️ Security & Production Readiness
-
-- **Resilient Auth:** Handled by [Clerk](https://clerk.com/) SDK at the edge middleware level. It securely redirects unauthorized users while allowing API routes to extract `userId` globally.
-- **Data Integrity:** Mongoose schemas enforce strictly validated type casting.
-- **Hydration & State Sync:** Optimized `useEffect` and React Context implementations for flawless hydration (preventing server-to-client UI breaking).
-
----
-
-## ⚙️ Tech Stack
-
-Frontend:
-- Next.js
-- React
-- TailwindCSS
-
-Backend:
-- Next.js API Routes
-- Node.js
-
-Database:
-- MongoDB Atlas
-- Mongoose
-
-Authentication:
-- Clerk
-
-Infrastructure:
-- Vercel (Deployment)
-- Cloudinary (File Uploads)
-
----
-
-## 🌐 Live Deployment
-
-Travio is deployed and accessible online.
-
-https://travio.fun
-
----
-
-## 🚀 Setup Instructions
+## 🚀 Getting Started
 
 ### Prerequisites
-You will need Node.js (v18+), npm, and a MongoDB Cluster URI.
+- **Node.js** v18 or higher
+- **MongoDB Atlas** account
+- **Clerk** account for Authentication
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/pranavgawaii/Travio.git
-cd Travio
-```
+### Installation
 
-### 2. Install dependencies
-Travio is structured as a monorepo internally utilizing modern package boundaries.
-```bash
-# Install Frontend
-npm install --prefix frontend
+1. **Clone the Project**
+   ```bash
+   git clone https://github.com/pranavgawaii/Travio.git
+   cd Travio
+   ```
 
-# Install Backend dependencies
-npm install --prefix backend
-```
+2. **Install Dependencies**
+   ```bash
+   # Install all packages
+   npm install --prefix frontend
+   npm install --prefix backend
+   ```
 
-### 3. Environment Variables
-Create a `.env.local` file inside the `/frontend` directory and provide the necessary credentials:
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-MONGODB_URI=your_mongodb_cluster_uri
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+3. **Configure Environment**
+   Create a `.env.local` in the `/frontend` directory:
+   ```env
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+   CLERK_SECRET_KEY=sk_test_...
+   MONGODB_URI=mongodb+srv://...
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   ```
 
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
-```
+4. **Launch Development**
+   ```bash
+   npm run dev --prefix frontend
+   ```
 
-### 4. Run the Application
-Start the Next.js development server:
-```bash
-npm run dev --prefix frontend
-```
-The application will launch on [http://localhost:3000](http://localhost:3000).
+---
 
-## 📚 Project Learnings
+## 👨‍💻 Developed By
 
-Building Travio was a deep dive into the realities of shipping a collaborative full-stack application. Beyond just the syntax, several core engineering lessons stood out:
+**[Pranav Gawai](https://github.com/pranavgawaii)**  
+*Full-Stack Engineer & Designer*
 
-### 🧩 Product Thinking: From Chaos to Cohesion
-Group travel is notorious for being "planned" across fragmented WhatsApp chats and messy spreadsheets. The true challenge was building a product that felt as flexible as a chat but as organized as a database. I learned that product thinking isn't just about features; it’s about mapping digital workflows to human behavior—ensuring that shifting from a checklist to a budget ledger feels intuitive, not technical.
-
-### 🧬 Database Modeling & Schema Evolution
-Handling complex, nested data like trip itineraries (Days → Activities → Costs) in MongoDB taught me the importance of schema design early in the build. I had to balance between "flat" structures for easy querying and "nested" documents for faster read performance. This project solidified my understanding of when to embed data versus when to reference it to keep the frontend state management clean and predictable.
-
-### 🔐 Security & Role-Based Access Control (RBAC)
-Collaboration without permissions is a recipe for data loss. Implementing logic for `Owner`, `Editor`, and `Viewer` roles was a lesson in building robust authorization layers. It’s one thing to hide a "Delete" button in CSS; it’s another to enforce that restriction at the API and database levels to ensure trip data remains secure regardless of the client-side state.
-
-### 🖼️ Image Optimization & Performance Awareness
-For a travel app, visual appeal is everything, but heavy images kill performance. I focused on "Performance Awareness" by implementing automated image optimization using Cloudinary and Next.js, leveraging modern formats like WEBP and AVIF with responsive sizing. This taught me that production-readiness means considering the user’s data plan and device performance as much as the UI aesthetics.
-
-### 🚀 Production Deployment & Real-World Stability
-Deploying to Vercel was the "moment of truth." I learned the importance of strict environment variable management and how to handle hydration errors that only appear in production builds. It reinforced the idea that a project isn't "done" until it is stable, secure, and performant in a real-world edge environment, shifting my focus from "just making it work" to "making it scale."
+If you find Travio useful, please consider giving it a ⭐ on GitHub!
 
 ---
 
 <div align="center">
-  
-### 👨‍💻 Developed By
-
-Engineered and designed by **[Pranav Gawai](https://github.com/pranavgawaii)** for the Chaicode Cohort 2026 Buildathon.
-
-⭐ **If you find this project interesting or helpful, please consider giving it a star to show your support!**
-
-<br/>
-
-> *I confirm this submission is my original work product, solely owned by me, and does not violate the intellectual property rights of any other person or entity.*
-
+  <p>© 2026 Travio Platform. Built for the modern traveler.</p>
 </div>
